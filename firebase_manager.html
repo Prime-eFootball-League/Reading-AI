@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EFH – Firebase Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:wght@300;400;500;700&family=Oswald:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --gold:#c9a84c;--gold2:#f0d080;--gold-glow:rgba(201,168,76,0.35);
+  --dark:#060810;--card:#121830;--card2:#182040;--border:#1e2a4a;--border2:#2a3a6a;
+  --green:#00e87a;--red:#ff3b5c;--blue:#4db8ff;--muted:#5a7a5a;--text:#e8f0e8;
+  --pitch-lines:rgba(255,255,255,.03);
+}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--dark);color:var(--text);
+  min-height:100vh;padding:0 0 3rem;position:relative;
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background:
+    repeating-linear-gradient(0deg,transparent,transparent 59px,var(--pitch-lines) 60px),
+    repeating-linear-gradient(90deg,transparent,transparent 59px,var(--pitch-lines) 60px);
+  pointer-events:none;z-index:0;
+}
+body::after{
+  content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse 120% 50% at 50% 0%,rgba(30,60,140,.12) 0%,transparent 65%);
+  pointer-events:none;z-index:0;
+}
+
+/* ── TOPBAR ── */
+.topbar{
+  background:linear-gradient(180deg,#0a0e1a 0%,#060810 100%);
+  border-bottom:2px solid var(--gold);
+  padding:1rem 1.2rem;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;
+  box-shadow:0 4px 24px rgba(0,0,0,.7);
+}
+.tb-brand{
+  font-family:'Anton',sans-serif;
+  font-size:1.3rem;color:var(--gold);
+  letter-spacing:3px;line-height:1;
+}
+.tb-sub{
+  font-family:'Oswald',sans-serif;
+  font-size:.6rem;color:var(--muted);letter-spacing:2px;
+  margin-top:.2rem;text-transform:uppercase;
+}
+.tb-back{
+  font-family:'Oswald',sans-serif;font-size:.68rem;font-weight:400;
+  letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--gold);text-decoration:none;
+  background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.3);
+  padding:.3rem .8rem;border-radius:20px;transition:all .2s;
+}
+.tb-back:hover{background:rgba(201,168,76,.15)}
+
+/* ── PAGE CONTENT ── */
+.page{padding:.9rem .8rem;position:relative;z-index:1}
+.page-title{
+  font-family:'Anton',sans-serif;
+  font-size:1.8rem;color:var(--gold);
+  letter-spacing:4px;margin-bottom:.2rem;
+  text-shadow:0 0 30px rgba(201,168,76,.4);
+}
+.page-sub{
+  font-family:'Oswald',sans-serif;
+  color:var(--muted);font-size:.65rem;letter-spacing:2px;
+  margin-bottom:1.2rem;text-transform:uppercase;
+}
+
+/* ── TABS ── */
+.tab-bar{
+  display:flex;overflow-x:auto;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:10px;margin-bottom:1rem;
+  -webkit-overflow-scrolling:touch;
+}
+.tab-bar::-webkit-scrollbar{height:0}
+.tab{
+  flex-shrink:0;padding:.65rem 1rem;
+  background:none;border:none;border-bottom:2px solid transparent;
+  color:var(--muted);font-family:'Oswald',sans-serif;
+  font-size:.68rem;font-weight:400;letter-spacing:1.5px;
+  text-transform:uppercase;cursor:pointer;
+  transition:color .2s,border-color .2s,background .2s;
+  white-space:nowrap;
+}
+.tab:hover{color:var(--gold2);background:rgba(201,168,76,.04)}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold);background:rgba(201,168,76,.04)}
+.tab-content{display:none}.tab-content.active{display:block}
+
+/* ── CARDS ── */
+.card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:1rem 1.1rem;margin-bottom:.9rem;
+  box-shadow:0 2px 16px rgba(0,0,0,.5);
+}
+.card-title{
+  font-family:'Anton',sans-serif;font-size:1rem;
+  letter-spacing:2px;color:var(--gold);
+  margin-bottom:.9rem;text-transform:uppercase;
+}
+
+/* ── BUTTONS ── */
+.btn{
+  padding:.7rem 1.2rem;border:none;border-radius:8px;
+  font-family:'Oswald',sans-serif;font-weight:400;
+  font-size:.78rem;text-transform:uppercase;letter-spacing:1.5px;
+  cursor:pointer;transition:all .2s;
+}
+.btn-gold{background:linear-gradient(135deg,var(--gold),#a07828);color:#000}
+.btn-gold:hover{background:linear-gradient(135deg,var(--gold2),var(--gold))}
+.btn-red{background:var(--red);color:#fff}
+.btn-red:hover{background:#e02040}
+.btn-green{background:var(--green);color:#000}
+.btn-outline{background:transparent;border:1.5px solid var(--gold);color:var(--gold)}
+.btn-outline:hover{background:rgba(201,168,76,.1)}
+.btn-full{width:100%;display:block;margin-top:.6rem}
+
+/* ── INFO BOXES ── */
+.info{background:rgba(77,184,255,.06);border-left:3px solid var(--blue);border-radius:6px;padding:.75rem 1rem;margin-bottom:.9rem;font-size:.82rem;color:#9ac4ff;line-height:1.6}
+.warn{background:rgba(255,59,92,.06);border-left:3px solid var(--red);border-radius:6px;padding:.75rem 1rem;margin-bottom:.9rem;font-size:.82rem;color:#ff8099;line-height:1.6}
+.success{background:rgba(0,232,122,.06);border-left:3px solid var(--green);border-radius:6px;padding:.75rem 1rem;margin-bottom:.9rem;font-size:.82rem;color:#7dffd4;line-height:1.6}
+
+/* ── TEAM ROWS ── */
+.team-row{
+  display:flex;align-items:center;gap:.7rem;
+  padding:.7rem .5rem;border-bottom:1px solid rgba(42,61,42,.5);
+}
+.team-row:last-child{border-bottom:none}
+.team-avatar{
+  width:34px;height:34px;border-radius:50%;
+  background:linear-gradient(135deg,rgba(201,168,76,.15),rgba(201,168,76,.04));
+  border:1.5px solid rgba(201,168,76,.35);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Anton',sans-serif;font-size:.8rem;color:var(--gold);flex-shrink:0;
+}
+.team-info{flex:1;min-width:0}
+.team-name{font-family:'DM Sans',sans-serif;font-weight:700;font-size:.88rem}
+.team-id{font-size:.6rem;color:var(--muted);font-family:monospace;word-break:break-all;margin-top:.1rem}
+.team-stats{font-size:.68rem;color:var(--muted);margin-top:.1rem;font-family:'Oswald',sans-serif;letter-spacing:.5px}
+.badge{display:inline-block;padding:.1rem .4rem;border-radius:4px;font-size:.6rem;font-family:'Oswald',sans-serif;letter-spacing:.5px;text-transform:uppercase}
+.badge-red{background:rgba(255,59,92,.15);color:var(--red)}
+.badge-gold{background:rgba(201,168,76,.12);color:var(--gold)}
+.badge-green{background:rgba(0,232,122,.12);color:var(--green)}
+
+/* ── INPUTS ── */
+label.lbl{
+  display:block;font-family:'Oswald',sans-serif;
+  font-size:.62rem;font-weight:400;text-transform:uppercase;
+  letter-spacing:1.5px;color:var(--muted);margin-bottom:.4rem;
+}
+select,input{
+  width:100%;background:rgba(255,255,255,.02);
+  border:1.5px solid var(--border);color:var(--text);
+  padding:.7rem .9rem;border-radius:8px;
+  font-family:'DM Sans';font-size:.9rem;margin-bottom:.8rem;
+  transition:border-color .2s;
+}
+select:focus,input:focus{outline:none;border-color:var(--gold)}
+select option{background:#0a0e1c}
+
+/* ── LOG OUTPUT ── */
+.log{
+  background:rgba(0,0,0,.4);
+  border:1px solid var(--border);
+  border-radius:8px;padding:.8rem;
+  font-family:monospace;font-size:.72rem;color:var(--green);
+  max-height:200px;overflow-y:auto;margin-top:.8rem;
+  white-space:pre-wrap;line-height:1.7;
+}
+.raw-json{
+  background:rgba(0,0,0,.4);
+  border:1px solid var(--border);border-radius:8px;padding:.8rem;
+  font-family:monospace;font-size:.68rem;color:var(--blue);
+  max-height:320px;overflow:auto;white-space:pre;
+  word-break:break-all;margin-top:.6rem;
+}
+.spinner{
+  display:inline-block;width:14px;height:14px;
+  border:2px solid rgba(201,168,76,.3);border-top-color:var(--gold);
+  border-radius:50%;animation:spin .7s linear infinite;
+  vertical-align:middle;margin-right:.4rem;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <div class="tb-brand">⚽ Firebase Manager</div>
+    <div class="tb-sub">EFH · Direct Data Access</div>
+  </div>
+  <a href="admin_dashboard.html" class="tb-back">← Dashboard</a>
+</div>
+
+<div class="page">
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('teams')">👥 Teams</button>
+    <button class="tab" onclick="switchTab('fixtures')">📅 Fixtures</button>
+    <button class="tab" onclick="switchTab('merge')">🔀 Merge</button>
+    <button class="tab" onclick="switchTab('raw')">🗂️ Raw Data</button>
+  </div>
+
+  <!-- TEAMS TAB -->
+  <div id="tab-teams" class="tab-content active">
+    <div class="card">
+      <div class="card-title">👥 All Teams in Firebase</div>
+      <div class="info">Shows every team stored in Firebase with their exact IDs. Duplicates are highlighted.</div>
+      <button class="btn btn-gold btn-full" onclick="loadTeams()">🔄 LOAD TEAMS FROM FIREBASE</button>
+      <div id="teamsOutput" style="margin-top:1rem"></div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:var(--green)">🔁 Reassign Team ID</div>
+      <div class="info">Pick the <strong>DUPLICATE</strong> team as SOURCE and the <strong>ORIGINAL</strong> correct team as TARGET. All fixtures referencing the duplicate will be updated to use the original team's ID, then the duplicate is removed. Stats recalculated.</div>
+      <button class="btn btn-outline btn-full" onclick="loadTeamsForReassign()" style="margin-bottom:.8rem">🔄 LOAD TEAMS</button>
+      <label class="lbl">SOURCE — Duplicate team (to remove)</label>
+      <select id="reassignSource"><option value="">-- Load teams first --</option></select>
+      <label class="lbl">TARGET — Original correct team (to keep)</label>
+      <select id="reassignTarget"><option value="">-- Load teams first --</option></select>
+      <button class="btn btn-green btn-full" onclick="reassignTeamId()">🔁 REASSIGN & FIX FIREBASE</button>
+      <div id="reassignLog" class="log" style="display:none"></div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:var(--red)">🗑️ Force Delete Team</div>
+      <div class="warn">Paste the exact Team ID from above. This permanently removes the team AND all their fixtures from Firebase.</div>
+      <label class="lbl">Team ID to Delete</label>
+      <input type="text" id="deleteTeamId" placeholder="e.g. team_1234567890">
+      <button class="btn btn-red btn-full" onclick="forceDeleteTeam()">🗑️ FORCE DELETE FROM FIREBASE</button>
+      <div id="deleteLog" class="log" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- FIXTURES TAB -->
+  <div id="tab-fixtures" class="tab-content">
+    <div class="card">
+      <div class="card-title">📅 All Fixtures</div>
+      <button class="btn btn-gold btn-full" onclick="loadFixtures()">🔄 LOAD FIXTURES</button>
+      <div id="fixturesOutput" style="margin-top:1rem"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">✏️ Edit Fixture Team by ID</div>
+      <div class="info">Use this to swap a corrupted team ID in a fixture to the correct team ID.</div>
+      <label class="lbl">Fixture ID</label>
+      <input type="text" id="editFixId" placeholder="m_1234567890.123">
+      <label class="lbl">Old Team ID (to replace)</label>
+      <input type="text" id="editOldTeamId" placeholder="team_old_id">
+      <label class="lbl">New Team ID (correct one)</label>
+      <input type="text" id="editNewTeamId" placeholder="team_new_id">
+      <button class="btn btn-gold btn-full" onclick="editFixtureTeam()">✏️ SWAP TEAM IN FIXTURE</button>
+      <div id="editFixLog" class="log" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- MERGE TAB -->
+  <div id="tab-merge" class="tab-content">
+    <div class="card">
+      <div class="card-title">🔀 Merge Duplicate Teams</div>
+      <div class="info">Load teams first, then select which team to REMOVE and which to KEEP. All fixtures with the old team ID get updated to the new one. Stats recalculated.</div>
+      <button class="btn btn-outline btn-full" onclick="loadTeamsForMerge()" style="margin-bottom:.8rem">🔄 LOAD TEAMS</button>
+      <label class="lbl">REMOVE (Duplicate/Old) Team</label>
+      <select id="mergeRemove"><option value="">-- Load teams first --</option></select>
+      <label class="lbl">KEEP (Correct) Team</label>
+      <select id="mergeKeepSel"><option value="">-- Load teams first --</option></select>
+      <button class="btn btn-gold btn-full" onclick="doMerge()">🔀 MERGE & FIX FIREBASE</button>
+      <div id="mergeLog" class="log" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- RAW DATA TAB -->
+  <div id="tab-raw" class="tab-content">
+    <div class="card">
+      <div class="card-title">🗂️ Raw Firebase Data</div>
+      <div class="info">View the complete raw JSON from Firebase. Use this to inspect exactly what's stored.</div>
+      <button class="btn btn-gold btn-full" onclick="loadRaw()">🔄 LOAD RAW JSON</button>
+      <div id="rawOutput"></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, get, set, update, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB09t02kMaaDFdUSyCK0hUgWOx5dMX19GI",
+  authDomain: "elite-football-hub.firebaseapp.com",
+  projectId: "elite-football-hub",
+  storageBucket: "elite-football-hub.firebasestorage.app",
+  messagingSenderId: "1061147915081",
+  appId: "1:1061147915081:web:6273826b83aa86fe37fa1d",
+  databaseURL: "https://elite-football-hub-default-rtdb.firebaseio.com"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const auth = getAuth(app);
+
+onAuthStateChanged(auth, user => {
+  if(!user){
+    document.body.innerHTML = `
+      <div style="max-width:360px;margin:3rem auto;padding:1rem;font-family:'DM Sans',sans-serif">
+        <div style="font-family:'Anton',sans-serif;color:#c9a84c;font-size:2rem;letter-spacing:3px;margin-bottom:1rem">🔐 LOGIN REQUIRED</div>
+        <input type="email" id="em" placeholder="Admin email" style="width:100%;background:#121830;border:1.5px solid #1e2a4a;color:#e8f0e8;padding:.75rem;border-radius:8px;font-size:.95rem;margin-bottom:.8rem">
+        <input type="password" id="pw" placeholder="Password" style="width:100%;background:#121830;border:1.5px solid #1e2a4a;color:#e8f0e8;padding:.75rem;border-radius:8px;font-size:.95rem;margin-bottom:.8rem">
+        <button onclick="doLogin()" style="width:100%;padding:.85rem;background:linear-gradient(135deg,#c9a84c,#a07828);color:#000;border:none;border-radius:8px;font-family:'Anton',sans-serif;font-size:1rem;letter-spacing:3px;cursor:pointer">LOGIN</button>
+        <div id="lerr" style="color:#ff3b5c;font-size:.82rem;margin-top:.6rem"></div>
+      </div>`;
+    window.doLogin = async () => {
+      const em = document.getElementById('em').value;
+      const pw = document.getElementById('pw').value;
+      try { await signInWithEmailAndPassword(auth, em, pw); location.reload(); }
+      catch(e) { document.getElementById('lerr').textContent = 'Wrong credentials'; }
+    };
+  }
+});
+
+async function getAllData() {
+  const snap = await get(ref(db, 'tournaments'));
+  return snap.val() || {};
+}
+
+async function getFirstTour() {
+  const all = await getAllData();
+  const keys = Object.keys(all);
+  if(!keys.length) return null;
+  return { key: keys[0], data: all[keys[0]] };
+}
+
+window.loadTeams = async () => {
+  const el = document.getElementById('teamsOutput');
+  el.innerHTML = '<div><span class="spinner"></span> Loading from Firebase...</div>';
+  try {
+    const all = await getAllData();
+    const tours = Object.values(all);
+    if(!tours.length){ el.innerHTML = '<div class="warn">No tournaments found in Firebase.</div>'; return; }
+    let html = '';
+    tours.forEach(tour => {
+      html += `<div style="margin-bottom:1.5rem">
+        <div style="font-family:'Anton',sans-serif;font-size:.9rem;color:var(--gold);letter-spacing:2px;margin-bottom:.6rem;text-transform:uppercase">🏆 ${tour.name} (${tour.teams?.length||0} teams)</div>`;
+      const teams = tour.teams || [];
+      const nameCount = {};
+      teams.forEach(t => { nameCount[t.name] = (nameCount[t.name]||0)+1; });
+      teams.forEach(t => {
+        const isDup = nameCount[t.name] > 1;
+        const gd = (t.goalsFor||0)-(t.goalsAgainst||0);
+        const fixCount = (tour.matches||[]).filter(m=>m.homeId===t.id||m.awayId===t.id).length;
+        html += `<div class="team-row">
+          <div class="team-avatar">${t.name[0]}</div>
+          <div class="team-info">
+            <div class="team-name">${t.name} ${isDup?'<span class="badge badge-red">DUPLICATE</span>':''}</div>
+            <div class="team-id">ID: ${t.id}</div>
+            <div class="team-stats">${t.played||0}P · ${t.points||0}pts · GD${gd>=0?'+':''}${gd} · ${fixCount} fixtures</div>
+          </div>
+          <button class="btn btn-red" style="font-size:.65rem;padding:.3rem .55rem" onclick="setDeleteId('${t.id}')">DELETE</button>
+        </div>`;
+      });
+      html += '</div>';
+    });
+    el.innerHTML = html;
+  } catch(e) { el.innerHTML = `<div class="warn">Error: ${e.message}</div>`; }
+};
+
+window.loadTeamsForReassign = async () => {
+  const log = document.getElementById('reassignLog');
+  log.style.display = 'block';
+  log.textContent = '🔄 Loading teams from Firebase...\n';
+  try {
+    const all = await getAllData();
+    const tour = Object.values(all)[0];
+    const teams = tour.teams || [];
+    const opts = '<option value="">-- Select --</option>' +
+      teams.map(t => {
+        const fixCount = (tour.matches||[]).filter(m=>String(m.homeId)===String(t.id)||String(m.awayId)===String(t.id)).length;
+        return `<option value="${t.id}">${t.name} · ${t.played||0}P · ${t.points||0}pts · ${fixCount} fixtures · ID:…${String(t.id).slice(-8)}</option>`;
+      }).join('');
+    document.getElementById('reassignSource').innerHTML = opts;
+    document.getElementById('reassignTarget').innerHTML = opts;
+    log.textContent = `✅ Loaded ${teams.length} teams.\n\nSOURCE = the duplicate (0pts, 1 fixture)\nTARGET = the original correct team (has real fixtures & stats)`;
+  } catch(e) { log.textContent = `❌ ${e.message}`; }
+};
+
+window.reassignTeamId = async () => {
+  const sourceId = document.getElementById('reassignSource').value;
+  const targetId = document.getElementById('reassignTarget').value;
+  const log = document.getElementById('reassignLog');
+  log.style.display = 'block';
+  if(!sourceId || !targetId){ log.textContent = '❌ Select both teams'; return; }
+  if(String(sourceId) === String(targetId)){ log.textContent = '❌ Select different teams!'; return; }
+  try {
+    const all = await getAllData();
+    const tourKey = Object.keys(all)[0];
+    const tour = all[tourKey];
+    const sourceTeam = tour.teams.find(t=>String(t.id)===String(sourceId));
+    const targetTeam = tour.teams.find(t=>String(t.id)===String(targetId));
+    if(!sourceTeam||!targetTeam){ log.textContent='❌ Could not find teams'; return; }
+    if(!confirm(`REASSIGN FIXTURES:\n\nDUPLICATE (remove): ${sourceTeam.name} · ID: ${sourceId}\nORIGINAL (keep): ${targetTeam.name} · ID: ${targetId}\n\nAll fixtures referencing the duplicate will now point to the original team. The duplicate team entry will be removed. Continue?`)) return;
+    log.textContent = `🔄 Reassigning fixtures from "${sourceTeam.name}" → "${targetTeam.name}"...\n`;
+    let fixedHome = 0, fixedAway = 0;
+    (tour.matches||[]).forEach(m => {
+      if(String(m.homeId) === String(sourceId)){ m.homeId = targetId; m.homeName = targetTeam.name; fixedHome++; }
+      if(String(m.awayId) === String(sourceId)){ m.awayId = targetId; m.awayName = targetTeam.name; fixedAway++; }
+    });
+    log.textContent += `✅ Updated ${fixedHome} home + ${fixedAway} away fixture references\n`;
+    const beforeCount = tour.matches.length;
+    tour.matches = tour.matches.filter(m => String(m.homeId) !== String(m.awayId));
+    const removed = beforeCount - tour.matches.length;
+    if(removed > 0) log.textContent += `🗑️ Removed ${removed} self-match(es)\n`;
+    tour.teams = tour.teams.filter(t => String(t.id) !== String(sourceId));
+    log.textContent += `🗑️ Removed duplicate team entry\n`;
+    tour.teams.forEach(t => { t.played=t.won=t.drawn=t.lost=t.goalsFor=t.goalsAgainst=t.points=0; });
+    (tour.matches||[]).filter(m=>m.done).forEach(m => {
+      const h = tour.teams.find(t=>String(t.id)===String(m.homeId));
+      const a = tour.teams.find(t=>String(t.id)===String(m.awayId));
+      if(h && a){
+        h.played++; a.played++;
+        h.goalsFor += m.homeScore; h.goalsAgainst += m.awayScore;
+        a.goalsFor += m.awayScore; a.goalsAgainst += m.homeScore;
+        if(m.homeScore > m.awayScore){ h.won++; h.points+=3; a.lost++; }
+        else if(m.awayScore > m.homeScore){ a.won++; a.points+=3; h.lost++; }
+        else{ h.drawn++; h.points++; a.drawn++; a.points++; }
+      }
+    });
+    log.textContent += `📊 Stats recalculated for all ${tour.teams.length} teams\n`;
+    log.textContent += '☁️ Saving to Firebase...\n';
+    await set(ref(db, `tournaments/${tourKey}`), tour);
+    log.textContent += '\n✅ ALL DONE! Reload your admin dashboard — duplicates are gone and all fixtures are fixed!';
+  } catch(e) { log.textContent += `\n❌ Error: ${e.message}`; }
+};
+
+window.forceDeleteTeam = async () => {
+  const tid = document.getElementById('deleteTeamId').value.trim();
+  const log = document.getElementById('deleteLog');
+  log.style.display = 'block';
+  if(!tid){ log.textContent = '❌ Enter a team ID first'; return; }
+  if(!confirm(`⚠️ Permanently delete team ID: ${tid} from Firebase?\n\nThis also removes their fixtures and reverses their stats.`)) return;
+  log.textContent = '🔄 Connecting to Firebase...\n';
+  try {
+    const all = await getAllData();
+    const tourKey = Object.keys(all)[0];
+    const tour = all[tourKey];
+    const team = (tour.teams||[]).find(t=>String(t.id)===String(tid));
+    if(!team){ log.textContent += `❌ Team ID "${tid}" not found!\nAvailable IDs:\n`+(tour.teams||[]).map(t=>`  ${t.id} → ${t.name}`).join('\n'); return; }
+    log.textContent += `✅ Found team: ${team.name}\n`;
+    const doneMatches = (tour.matches||[]).filter(m=>(String(m.homeId)===String(tid)||String(m.awayId)===String(tid))&&m.done);
+    log.textContent += `📊 Reversing stats for ${doneMatches.length} completed matches...\n`;
+    doneMatches.forEach(m => {
+      const h = tour.teams.find(t=>t.id===m.homeId);
+      const a = tour.teams.find(t=>t.id===m.awayId);
+      if(h&&a){
+        h.played--; a.played--;
+        h.goalsFor-=m.homeScore; h.goalsAgainst-=m.awayScore;
+        a.goalsFor-=m.awayScore; a.goalsAgainst-=m.homeScore;
+        if(m.homeScore>m.awayScore){h.won--;h.points-=3;a.lost--;}
+        else if(m.awayScore>m.homeScore){a.won--;a.points-=3;h.lost--;}
+        else{h.drawn--;h.points--;a.drawn--;a.points--;}
+      }
+    });
+    const beforeCount = tour.teams.length;
+    tour.teams = tour.teams.filter(t=>String(t.id)!==String(tid));
+    log.textContent += `🗑️ Removed team (${beforeCount} → ${tour.teams.length} teams)\n`;
+    const beforeFix = (tour.matches||[]).length;
+    tour.matches = (tour.matches||[]).filter(m=>String(m.homeId)!==String(tid)&&String(m.awayId)!==String(tid));
+    log.textContent += `🗑️ Removed fixtures (${beforeFix} → ${tour.matches.length})\n`;
+    log.textContent += '☁️ Saving to Firebase...\n';
+    await set(ref(db, `tournaments/${tourKey}`), tour);
+    log.textContent += '✅ DONE! Team deleted from Firebase successfully!\n🔄 Reload the admin dashboard to see changes.';
+  } catch(e) { log.textContent += `\n❌ Error: ${e.message}`; }
+};
+
+window.loadFixtures = async () => {
+  const el = document.getElementById('fixturesOutput');
+  el.innerHTML = '<div><span class="spinner"></span> Loading...</div>';
+  try {
+    const all = await getAllData();
+    const tours = Object.values(all);
+    if(!tours.length){ el.innerHTML='<div class="warn">No data found</div>'; return; }
+    const tour = tours[0];
+    const matches = tour.matches || [];
+    const rounds = [...new Set(matches.map(m=>m.round))];
+    let html = `<div style="font-family:'Oswald',sans-serif;font-size:.68rem;color:var(--muted);margin-bottom:.8rem;letter-spacing:1px">${matches.length} TOTAL FIXTURES</div>`;
+    rounds.forEach(r => {
+      html += `<div style="margin-bottom:1rem"><div style="font-family:'Oswald',sans-serif;font-size:.65rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--gold);padding:.3rem .6rem;background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.2);border-radius:6px;margin-bottom:.4rem;display:inline-block">${r}</div>`;
+      matches.filter(m=>m.round===r).forEach(m=>{
+        html += `<div style="padding:.5rem 0;border-bottom:1px solid rgba(42,61,42,.5);font-size:.8rem">
+          <div style="font-family:'DM Sans',sans-serif;font-weight:700">${m.homeName} vs ${m.awayName} — <span style="color:${m.done?'var(--green)':'var(--muted)'}">${m.done?m.homeScore+'-'+m.awayScore:'Pending'}</span></div>
+          <div style="font-family:monospace;font-size:.62rem;color:var(--muted)">ID: ${m.id}</div>
+          <div style="font-family:monospace;font-size:.62rem;color:var(--muted)">Home ID: ${m.homeId} · Away ID: ${m.awayId}</div>
+        </div>`;
+      });
+      html += '</div>';
+    });
+    el.innerHTML = html;
+  } catch(e) { el.innerHTML = `<div class="warn">Error: ${e.message}</div>`; }
+};
+
+window.editFixtureTeam = async () => {
+  const fid = document.getElementById('editFixId').value.trim();
+  const oldId = document.getElementById('editOldTeamId').value.trim();
+  const newId = document.getElementById('editNewTeamId').value.trim();
+  const log = document.getElementById('editFixLog');
+  log.style.display = 'block';
+  if(!fid||!oldId||!newId){ log.textContent='❌ Fill all three fields'; return; }
+  try {
+    const all = await getAllData();
+    const tourKey = Object.keys(all)[0];
+    const tour = all[tourKey];
+    const m = (tour.matches||[]).find(x=>x.id===fid);
+    if(!m){ log.textContent=`❌ Fixture ID "${fid}" not found`; return; }
+    const newTeam = (tour.teams||[]).find(t=>t.id===newId);
+    if(!newTeam){ log.textContent=`❌ New team ID "${newId}" not found`; return; }
+    if(m.homeId===oldId){ m.homeId=newId; m.homeName=newTeam.name; log.textContent=`✅ Updated HOME team to ${newTeam.name}\n`; }
+    else if(m.awayId===oldId){ m.awayId=newId; m.awayName=newTeam.name; log.textContent=`✅ Updated AWAY team to ${newTeam.name}\n`; }
+    else { log.textContent=`❌ Old team ID not found in this fixture\nHome: ${m.homeId}\nAway: ${m.awayId}`; return; }
+    await set(ref(db, `tournaments/${tourKey}`), tour);
+    log.textContent += '✅ Saved to Firebase!';
+  } catch(e) { log.textContent=`❌ ${e.message}`; }
+};
+
+window.loadTeamsForMerge = async () => {
+  try {
+    const all = await getAllData();
+    const tour = Object.values(all)[0];
+    const teams = tour.teams || [];
+    const opts = '<option value="">-- Select --</option>' + teams.map(t=>`<option value="${t.id}">${t.name} · ID:${t.id.slice(-6)} · ${t.played||0}P ${t.points||0}pts</option>`).join('');
+    document.getElementById('mergeRemove').innerHTML = opts;
+    document.getElementById('mergeKeepSel').innerHTML = opts;
+    document.getElementById('mergeLog').style.display='block';
+    document.getElementById('mergeLog').textContent=`✅ Loaded ${teams.length} teams. Now select which to REMOVE and which to KEEP.`;
+  } catch(e) {
+    document.getElementById('mergeLog').style.display='block';
+    document.getElementById('mergeLog').textContent=`❌ ${e.message}`;
+  }
+};
+
+window.doMerge = async () => {
+  const removeId = document.getElementById('mergeRemove').value;
+  const keepId = document.getElementById('mergeKeepSel').value;
+  const log = document.getElementById('mergeLog');
+  log.style.display='block';
+  if(!removeId||!keepId){ log.textContent='❌ Select both teams'; return; }
+  if(removeId===keepId){ log.textContent='❌ Select different teams!'; return; }
+  try {
+    const all = await getAllData();
+    const tourKey = Object.keys(all)[0];
+    const tour = all[tourKey];
+    const removeTeam = tour.teams.find(t=>t.id===removeId);
+    const keepTeam = tour.teams.find(t=>t.id===keepId);
+    if(!confirm(`MERGE:\nREMOVE: ${removeTeam.name} (ID: ${removeId})\nKEEP: ${keepTeam.name} (ID: ${keepId})\n\nAll fixtures with the removed team will update to the keep team. Continue?`)) return;
+    log.textContent = `🔄 Merging "${removeTeam.name}" → "${keepTeam.name}"...\n`;
+    let fixedCount = 0;
+    (tour.matches||[]).forEach(m=>{
+      if(m.homeId===removeId){ m.homeId=keepId; m.homeName=keepTeam.name; fixedCount++; }
+      if(m.awayId===removeId){ m.awayId=keepId; m.awayName=keepTeam.name; fixedCount++; }
+    });
+    log.textContent += `✅ Updated ${fixedCount} fixture references\n`;
+    const before = tour.matches.length;
+    tour.matches = tour.matches.filter(m=>m.homeId!==m.awayId);
+    if(tour.matches.length<before) log.textContent += `🗑️ Removed ${before-tour.matches.length} self-match(es)\n`;
+    tour.teams = tour.teams.filter(t=>t.id!==removeId);
+    log.textContent += `🗑️ Removed duplicate team\n`;
+    tour.teams.forEach(t=>{t.played=t.won=t.drawn=t.lost=t.goalsFor=t.goalsAgainst=t.points=0;});
+    (tour.matches||[]).filter(m=>m.done).forEach(m=>{
+      const h=tour.teams.find(t=>t.id===m.homeId);
+      const a=tour.teams.find(t=>t.id===m.awayId);
+      if(h&&a){
+        h.played++;a.played++;
+        h.goalsFor+=m.homeScore;h.goalsAgainst+=m.awayScore;
+        a.goalsFor+=m.awayScore;a.goalsAgainst+=m.homeScore;
+        if(m.homeScore>m.awayScore){h.won++;h.points+=3;a.lost++;}
+        else if(m.awayScore>m.homeScore){a.won++;a.points+=3;h.lost++;}
+        else{h.drawn++;h.points++;a.drawn++;a.points++;}
+      }
+    });
+    log.textContent += `📊 Stats recalculated for ${tour.teams.length} teams\n`;
+    log.textContent += '☁️ Saving to Firebase...\n';
+    await set(ref(db, `tournaments/${tourKey}`), tour);
+    log.textContent += '✅ DONE! Reload your admin dashboard to see the fix.';
+  } catch(e) { log.textContent += `❌ ${e.message}`; }
+};
+
+window.loadRaw = async () => {
+  const el = document.getElementById('rawOutput');
+  el.innerHTML = '<div><span class="spinner"></span> Loading...</div>';
+  try {
+    const all = await getAllData();
+    el.innerHTML = `<div class="raw-json">${JSON.stringify(all, null, 2)}</div>`;
+  } catch(e) { el.innerHTML=`<div class="warn">${e.message}</div>`; }
+};
+</script>
+
+<script>
+function setDeleteId(id){
+  document.getElementById('deleteTeamId').value = id;
+  document.getElementById('deleteLog').style.display = 'none';
+  document.getElementById('deleteTeamId').scrollIntoView({behavior:'smooth', block:'center'});
+  document.getElementById('deleteTeamId').style.borderColor = 'var(--red)';
+  setTimeout(()=>document.getElementById('deleteTeamId').style.borderColor='', 2000);
+}
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  document.querySelectorAll('.tab')[['teams','fixtures','merge','raw'].indexOf(name)].classList.add('active');
+}
+</script>
+</body>
+</html>

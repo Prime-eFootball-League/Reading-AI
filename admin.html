@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EFH – Admin Login</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:wght@300;400;500;700&family=Oswald:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --gold:#c9a84c;--gold2:#f0d080;--gold-glow:rgba(201,168,76,0.35);
+  --dark:#060810;--card:#121830;--card2:#182040;--border:#1e2a4a;--border2:#2a3a6a;
+  --green:#00e87a;--red:#ff3b5c;--muted:#5a7a5a;--text:#e8f0e8;
+  --pitch-lines:rgba(255,255,255,.03);
+}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--dark);color:var(--text);
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  padding:1.5rem;position:relative;overflow:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background:
+    repeating-linear-gradient(0deg,transparent,transparent 59px,var(--pitch-lines) 60px),
+    repeating-linear-gradient(90deg,transparent,transparent 59px,var(--pitch-lines) 60px);
+  pointer-events:none;z-index:0;
+}
+body::after{
+  content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse 100% 60% at 50% 0%,rgba(0,140,60,.1) 0%,transparent 65%);
+  pointer-events:none;z-index:0;
+}
+.wrap{width:100%;max-width:380px;position:relative;z-index:1}
+
+.logo-bar{text-align:center;margin-bottom:2rem}
+.logo-bar img{
+  width:80px;height:80px;border-radius:50%;
+  border:2px solid var(--gold);object-fit:cover;
+  box-shadow:0 0 0 4px rgba(201,168,76,.1),0 0 32px rgba(201,168,76,.4);
+  margin-bottom:.9rem;display:block;margin-left:auto;margin-right:auto;
+}
+.logo-bar h1{
+  font-family:'Anton',sans-serif;
+  font-size:2.6rem;color:var(--gold);letter-spacing:6px;
+  text-shadow:0 0 40px rgba(201,168,76,.5);line-height:1;
+}
+.logo-bar p{
+  font-family:'Oswald',sans-serif;
+  color:var(--muted);font-size:.65rem;letter-spacing:3px;
+  margin-top:.4rem;text-transform:uppercase;
+}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:2rem 1.8rem;
+  box-shadow:0 24px 60px rgba(0,0,0,.6);
+  position:relative;overflow:hidden;
+}
+.card::before{
+  content:'';position:absolute;top:0;left:10%;right:10%;
+  height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+}
+
+.divider{display:flex;align-items:center;gap:.8rem;margin-bottom:1.8rem}
+.divider-line{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border2),transparent)}
+.divider span{
+  font-family:'Oswald',sans-serif;font-size:.6rem;
+  letter-spacing:3px;color:var(--muted);text-transform:uppercase;white-space:nowrap;
+}
+
+label{
+  display:block;font-family:'Oswald',sans-serif;
+  font-size:.62rem;font-weight:400;text-transform:uppercase;
+  letter-spacing:1.5px;color:var(--muted);margin-bottom:.4rem;
+}
+.input-wrap{margin-bottom:1.2rem}
+input{
+  width:100%;background:rgba(255,255,255,.02);
+  border:1.5px solid var(--border);
+  color:var(--text);padding:.85rem 1rem;
+  border-radius:10px;font-family:'DM Sans';font-size:.95rem;
+  transition:border-color .2s,background .2s;
+}
+input:focus{outline:none;border-color:var(--gold);background:rgba(201,168,76,.03)}
+input::placeholder{color:var(--muted);opacity:.7}
+
+.pw-wrap{position:relative;margin-bottom:1.2rem}
+.pw-wrap input{padding-right:3rem;margin-bottom:0;width:100%}
+.pw-toggle{
+  position:absolute;right:.9rem;top:50%;transform:translateY(-50%);
+  background:none;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;
+  padding:0;line-height:1;transition:color .2s;
+}
+.pw-toggle:hover{color:var(--gold)}
+
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.blinking{animation:blink .7s infinite}
+
+.btn{
+  width:100%;padding:1rem;border:none;border-radius:10px;
+  font-family:'Anton',sans-serif;font-size:1.1rem;
+  text-transform:uppercase;letter-spacing:4px;cursor:pointer;
+  background:linear-gradient(135deg,var(--gold),#a07828);
+  color:#000;transition:transform .15s,box-shadow .15s,opacity .2s;
+  margin-top:.4rem;
+}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(201,168,76,.4)}
+.btn:active{transform:translateY(0)}
+.btn:disabled{opacity:.6;transform:none;cursor:not-allowed}
+
+.err{
+  background:rgba(255,59,92,.07);border:1px solid rgba(255,59,92,.25);
+  color:var(--red);padding:.75rem 1rem;border-radius:8px;
+  margin-bottom:1rem;font-size:.83rem;display:none;
+  font-family:'DM Sans',sans-serif;line-height:1.5;
+}
+.err.show{display:block}
+
+.footer-links{text-align:center;margin-top:1.5rem;display:flex;flex-direction:column;gap:.6rem}
+.footer-links a{
+  font-family:'Oswald',sans-serif;
+  color:var(--muted);font-size:.68rem;text-decoration:none;
+  letter-spacing:1px;transition:color .2s;
+}
+.footer-links a:hover{color:var(--gold)}
+
+.admin-badge{
+  display:inline-flex;align-items:center;gap:.4rem;
+  background:rgba(255,59,92,.08);border:1px solid rgba(255,59,92,.25);
+  color:var(--red);padding:.2rem .7rem;border-radius:20px;
+  font-family:'Oswald',sans-serif;font-size:.6rem;letter-spacing:2px;
+  margin-bottom:1.5rem;text-transform:uppercase;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo-bar">
+    <img src="efh_logo.png" alt="EFH">
+    <h1>ELITE FOOTBALL HUB</h1>
+    <p>Elite Football Hub · EFH</p>
+  </div>
+  <div class="card">
+    <div class="divider">
+      <div class="divider-line"></div>
+      <span>🔐 Admin Access</span>
+      <div class="divider-line"></div>
+    </div>
+    <div id="err" class="err"></div>
+    <label>Email</label>
+    <div class="input-wrap">
+      <input type="email" id="em" placeholder="Enter your email" autofocus>
+    </div>
+    <label>Password</label>
+    <div class="pw-wrap">
+      <input type="password" id="pw" placeholder="Enter your password">
+      <button class="pw-toggle" onclick="togglePw()" tabindex="-1" id="pwToggle">👁</button>
+    </div>
+    <button class="btn" id="loginBtn" onclick="window.login&&window.login()">LOGIN</button>
+    <div class="footer-links">
+      <a href="#" onclick="window.forgotPassword&&window.forgotPassword();return false">Forgot password?</a>
+      <a href="index.html">← Back to public site</a>
+    </div>
+  </div>
+</div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB09t02kMaaDFdUSyCK0hUgWOx5dMX19GI",
+  authDomain: "elite-football-hub.firebaseapp.com",
+  projectId: "elite-football-hub",
+  storageBucket: "elite-football-hub.firebasestorage.app",
+  messagingSenderId: "1061147915081",
+  appId: "1:1061147915081:web:a17b11c16fff7c58c0b629",
+  databaseURL: "https://elite-football-hub-default-rtdb.firebaseio.com"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+onAuthStateChanged(auth, user => { if(user) location.href='admin_dashboard.html'; });
+
+document.getElementById('em').addEventListener('keydown', e=>{ if(e.key==='Enter') login(); });
+document.getElementById('pw').addEventListener('keydown', e=>{ if(e.key==='Enter') login(); });
+document.querySelector('a[href="#"]').addEventListener('click', e=>{ e.preventDefault(); forgotPassword(); });
+
+async function login(){
+  const em = document.getElementById('em').value.trim();
+  const pw = document.getElementById('pw').value;
+  const err = document.getElementById('err');
+  const btn = document.getElementById('loginBtn');
+  err.classList.remove('show');
+  if(!em || !pw){ err.textContent='Please enter email and password.'; err.classList.add('show'); return; }
+  btn.textContent='Logging in...'; btn.classList.add('blinking'); btn.disabled=true;
+  const timeout = setTimeout(()=>{
+    btn.textContent='LOGIN'; btn.classList.remove('blinking'); btn.disabled=false;
+    err.textContent='Connection timed out. Check your internet and try again.';
+    err.classList.add('show');
+  }, 10000);
+  try {
+    await signInWithEmailAndPassword(auth, em, pw);
+    clearTimeout(timeout);
+  } catch(e) {
+    clearTimeout(timeout);
+    btn.textContent='LOGIN'; btn.classList.remove('blinking'); btn.disabled=false;
+    err.textContent='Wrong email or password. Try again.';
+    err.classList.add('show');
+    document.getElementById('pw').value='';
+    document.getElementById('pw').focus();
+  }
+}
+
+function togglePw(){
+  const input=document.getElementById('pw');
+  const btn=document.getElementById('pwToggle');
+  if(input.type==='password'){input.type='text';btn.textContent='🙈';}
+  else{input.type='password';btn.textContent='👁';}
+}
+window.togglePw=togglePw;
+window.login=login;
+
+async function forgotPassword(){
+  const em = document.getElementById('em').value.trim();
+  const err = document.getElementById('err');
+  err.style.background=''; err.style.borderColor=''; err.style.color='';
+  if(!em){ err.textContent='Enter your email above first, then click Forgot password.'; err.classList.add('show'); return; }
+  try {
+    await sendPasswordResetEmail(auth, em);
+    err.style.background='rgba(0,232,122,.07)';
+    err.style.borderColor='rgba(0,232,122,.3)';
+    err.style.color='var(--green)';
+    err.textContent='✅ Reset email sent! Check your inbox.';
+    err.classList.add('show');
+  } catch(e) {
+    err.textContent='Could not send reset email. Check the address and try again.';
+    err.classList.add('show');
+  }
+}
+window.forgotPassword=forgotPassword;
+</script>
+</body>
+</html>
