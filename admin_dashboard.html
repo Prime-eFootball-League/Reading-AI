@@ -269,9 +269,9 @@ td.pts{font-family:'Anton',sans-serif;font-size:1.1rem;color:var(--gold);text-sh
         <!-- drag handle -->
         <div style="width:40px;height:4px;background:var(--border);border-radius:4px;margin:-0.5rem auto 1rem"></div>
         <label class="lbl">Team Name</label>
-        <input type="text" id="regName" placeholder="e.g. FC Elite United">
+        <input type="text" id="regName" placeholder="e.g. FC Elite United" autocomplete="off" name="efh_team_name_field">
         <label class="lbl">Coach Name</label>
-        <input type="text" id="regCoach" placeholder="Coach name">
+        <input type="text" id="regCoach" placeholder="Coach name" autocomplete="off" name="efh_coach_name_field">
         <label class="lbl">Club Logo <span style="color:var(--muted);font-size:.58rem">(tap to browse or search)</span></label>
         <div style="position:relative;margin-bottom:.5rem">
           <input type="text" id="regLogoSearch" placeholder="Search e.g. Arsenal, Real Madrid..." style="margin-bottom:.3rem" oninput="logoSearch(this.value)" onfocus="showLogoGrid(this.value)" autocomplete="off">
@@ -335,7 +335,8 @@ td.pts{font-family:'Anton',sans-serif;font-size:1.1rem;color:var(--gold);text-sh
           <button class="seg-btn" id="leg2" onclick="selLeg(2)">Home & Away (2 Legs)</button>
         </div>
         <label class="lbl">Teams Advancing to Next Stage</label>
-        <input type="number" id="leagueAdv" min="1" value="4" placeholder="e.g. 4">
+        <input type="number" id="leagueAdv" min="1" value="4" placeholder="e.g. 4" oninput="updateLeagueMathCheck()">
+        <div class="info" id="leagueMathCheck" style="margin-top:.4rem"></div>
       </div>
       <div id="groupOpts" style="display:none">
         <div class="info info-blue">Teams split into groups. Top finishers advance.</div>
@@ -357,14 +358,14 @@ td.pts{font-family:'Anton',sans-serif;font-size:1.1rem;color:var(--gold);text-sh
       <div id="swissOpts" style="display:none">
         <div class="info info-blue">🔄 <strong>Swiss / UCL-Style League Phase.</strong> All teams share one table. Each team plays a fixed number of match days against different opponents. Top teams auto-qualify; middle teams enter a play-off round to join the knockout bracket.</div>
         <div class="row2">
-          <div><label class="lbl">Match Days (rounds)</label><input type="number" id="swissRounds" min="2" max="8" value="4" placeholder="e.g. 4"></div>
-          <div><label class="lbl">Teams: Auto-Qualify (Top N)</label><input type="number" id="swissAutoQual" min="1" value="10" placeholder="e.g. 10"></div>
+          <div><label class="lbl">Match Days (rounds)</label><input type="number" id="swissRounds" min="2" max="8" value="4" placeholder="e.g. 4" oninput="updateSwissMathCheck()"></div>
+          <div><label class="lbl">Teams: Auto-Qualify (Top N)</label><input type="number" id="swissAutoQual" min="1" value="10" placeholder="e.g. 10" oninput="updateSwissMathCheck()"></div>
         </div>
         <div class="row2">
-          <div><label class="lbl">Teams enter Play-off Round</label><input type="number" id="swissPlayoffTeams" min="2" value="12" placeholder="e.g. 12"></div>
-          <div><label class="lbl">Play-off winners advance</label><input type="number" id="swissPlayoffAdv" min="1" value="6" placeholder="e.g. 6"></div>
+          <div><label class="lbl">Teams enter Play-off Round</label><input type="number" id="swissPlayoffTeams" min="2" value="12" placeholder="e.g. 12" oninput="updateSwissMathCheck()"></div>
+          <div><label class="lbl">Play-off winners advance</label><input type="number" id="swissPlayoffAdv" min="1" value="6" placeholder="e.g. 6" oninput="updateSwissMathCheck()"></div>
         </div>
-        <div class="info info-green" style="margin-top:.5rem">💡 Total bracket teams = Auto-Qualify + Play-off winners. E.g. 10+6 = 16 for a Round of 16.</div>
+        <div class="info" id="swissMathCheck" style="margin-top:.5rem"></div>
         <label class="lbl">Match Legs (league phase)</label>
         <div class="seg">
           <button class="seg-btn on" id="swleg1" onclick="selSwLeg(1)">1 Leg</button>
@@ -438,9 +439,9 @@ td.pts{font-family:'Anton',sans-serif;font-size:1.1rem;color:var(--gold);text-sh
         <button class="btn-full btn-outline" onclick="wizImportAllRegistry()" style="margin-bottom:.8rem;border-style:dashed;font-size:.82rem;color:var(--muted)">📥 IMPORT ALL REGISTRY TEAMS (then remove extras)</button>
         <div style="text-align:center;color:var(--muted);font-size:.8rem;margin:.3rem 0 .8rem">— or add new —</div>
         <label class="lbl">Team Name</label>
-        <input type="text" id="wizTeamName" placeholder="e.g. FC Elite United">
+        <input type="text" id="wizTeamName" placeholder="e.g. FC Elite United" autocomplete="off" name="efh_wiz_team_name">
         <label class="lbl">Coach Name</label>
-        <input type="text" id="wizCoach" placeholder="Coach name">
+        <input type="text" id="wizCoach" placeholder="Coach name" autocomplete="off" name="efh_wiz_coach_name">
         <div id="wizGroupRow" style="display:none">
           <label class="lbl">Group</label>
           <select id="wizGroup"></select>
@@ -597,9 +598,9 @@ td.pts{font-family:'Anton',sans-serif;font-size:1.1rem;color:var(--gold);text-sh
       </select>
       <div style="text-align:center;color:var(--muted);font-size:.8rem;margin:.5rem 0">— or add new —</div>
       <label class="lbl">New Team Name</label>
-      <input type="text" id="addTeamName" placeholder="Team name (saves to registry too)">
+      <input type="text" id="addTeamName" placeholder="Team name (saves to registry too)" autocomplete="off" name="efh_add_team_name">
       <label class="lbl">Coach Name</label>
-      <input type="text" id="addCoach" placeholder="Coach name">
+      <input type="text" id="addCoach" placeholder="Coach name" autocomplete="off" name="efh_add_coach_name">
       <div id="addGroupRow" style="display:none">
         <label class="lbl">Group</label>
         <select id="addGroup"></select>
@@ -809,7 +810,7 @@ td.pts{font-family:'Anton',sans-serif;font-size:1.1rem;color:var(--gold);text-sh
       <div class="card-title">🏅 Awards Manager</div>
       <div class="info" style="margin-bottom:.8rem">Upload trophies and medals here. They will appear in the <strong>Treasure Hall</strong> on the public page and on each team's profile. You can upload multiple images and assign each to a team, season and award type.</div>
       <label class="lbl">Award Type</label>
-      <select id="awardType" style="width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:.55rem .8rem;border-radius:8px;font-family:'Oswald',sans-serif;margin-bottom:.6rem">
+      <select id="awardType" onchange="autoFillAward()" style="width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:.55rem .8rem;border-radius:8px;font-family:'Oswald',sans-serif;margin-bottom:.6rem">
         <option value="trophy_1st">🏆 Champion Trophy (1st Place)</option>
         <option value="medal_1st">🥇 1st Place Medal</option>
         <option value="medal_2nd">🥈 2nd Place Medal</option>
@@ -823,7 +824,11 @@ td.pts{font-family:'Anton',sans-serif;font-size:1.1rem;color:var(--gold);text-sh
       <label class="lbl">Recipient (Team or Player name)</label>
       <input type="text" id="awardRecipient" placeholder="Team or player name..." style="margin-bottom:.6rem">
       <label class="lbl">Season / Tournament</label>
-      <input type="text" id="awardSeason" placeholder="e.g. EFH Season 2" style="margin-bottom:.6rem">
+      <div id="awardSeasonBox" onclick="openSeasonPicker()" style="cursor:pointer;width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:.6rem .8rem;border-radius:8px;margin-bottom:.6rem;display:flex;align-items:center;justify-content:space-between;gap:.5rem">
+        <span id="awardSeasonLabel" style="color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.9rem">Tap to select a tournament...</span>
+        <span style="color:var(--gold);font-size:.8rem;flex-shrink:0">▼</span>
+      </div>
+      <input type="hidden" id="awardTourId" value="">
       <label class="lbl">Year</label>
       <input type="number" id="awardYear" placeholder="2025" style="margin-bottom:.8rem">
       <label class="lbl">Trophy / Medal Image (JPG or PNG, max 3MB)</label>
@@ -838,6 +843,53 @@ td.pts{font-family:'Anton',sans-serif;font-size:1.1rem;color:var(--gold);text-sh
       <div class="card-title">🏛️ Current Awards</div>
       <div id="awardsList"><div class="empty">No awards added yet</div></div>
     </div>
+  </div>
+</div>
+
+<!-- SEASON / TOURNAMENT PICKER SHEET -->
+<div id="seasonPickerWrap" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:520;align-items:flex-end;justify-content:center;backdrop-filter:blur(3px)" onclick="if(event.target===this)closeSeasonPicker()">
+  <div id="seasonPickerSheet" style="background:var(--card);border:1px solid var(--border);border-radius:18px 18px 0 0;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;padding:1.2rem 1.2rem 2rem;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem">
+      <div class="card-title" style="margin-bottom:0">🏆 Select Tournament</div>
+      <button onclick="closeSeasonPicker()" style="background:none;border:none;color:var(--muted);font-size:1.3rem;cursor:pointer;padding:.2rem">✕</button>
+    </div>
+    <div style="width:40px;height:4px;background:var(--border);border-radius:4px;margin:-0.3rem auto 1rem"></div>
+    <div id="seasonPickerList"></div>
+  </div>
+</div>
+
+<!-- UNFINISHED TOURNAMENT WARNING MODAL -->
+<div class="overlay" id="seasonWarnOverlay">
+  <div class="modal gold-border">
+    <div class="modal-title" style="color:var(--red)">⚠️ Not Finished Yet</div>
+    <div class="info" style="margin-bottom:1.2rem;color:var(--text)" id="seasonWarnText">This tournament hasn't finished yet — the champion, golden boot, and other award data may not be final. Select it anyway?</div>
+    <div style="display:flex;gap:.7rem">
+      <button class="btn-full btn-outline" onclick="cancelUnfinishedSelect()" style="flex:1">Cancel</button>
+      <button class="btn-full btn-red" onclick="confirmUnfinishedSelect()" style="flex:1">Select Anyway</button>
+    </div>
+  </div>
+</div>
+
+<!-- AWARD DETAIL SHEET -->
+<div id="awardDetailOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:520;align-items:flex-end;justify-content:center;backdrop-filter:blur(3px)" onclick="if(event.target===this)closeAwardDetail()">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:18px 18px 0 0;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;padding:1.2rem 1.2rem 2rem">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem">
+      <div class="card-title" style="margin-bottom:0">🏅 Award Detail</div>
+      <button onclick="closeAwardDetail()" style="background:none;border:none;color:var(--muted);font-size:1.3rem;cursor:pointer;padding:.2rem">✕</button>
+    </div>
+    <div style="width:40px;height:4px;background:var(--border);border-radius:4px;margin:-0.3rem auto 1rem"></div>
+    <div id="awardDetailBody"></div>
+    <button id="awardDetailDeleteBtn" class="btn-full btn-red" style="margin-top:1rem">🗑 Delete Award</button>
+  </div>
+</div>
+
+<!-- RENAME TOURNAMENT MODAL -->
+<div class="overlay" id="renameTourOverlay">
+  <div class="modal gold-border">
+    <div class="modal-title" style="color:var(--gold)">✏️ Rename Tournament <button class="modal-close" onclick="closeRenameTour()">✕</button></div>
+    <label class="lbl">Tournament Name</label>
+    <input type="text" id="renameTourInput" style="margin-bottom:1rem" onkeydown="if(event.key==='Enter')saveRenameTour()">
+    <button class="btn-full btn-gold" onclick="saveRenameTour()">💾 SAVE NAME</button>
   </div>
 </div>
 
@@ -1135,6 +1187,37 @@ function selFmt(f){
   document.getElementById('groupOpts').style.display=f==='groups'?'block':'none';
   var swOpts=document.getElementById('swissOpts');if(swOpts)swOpts.style.display=f==='swiss'?'block':'none';
   if(f==='groups') updateGroupMathCheck();
+  if(f==='league') updateLeagueMathCheck();
+  if(f==='swiss') updateSwissMathCheck();
+}
+// Live validation for League format: teams advancing to the bracket must be
+// a valid bracket size (2/4/8/16), same rule as Groups/Swiss.
+function updateLeagueMathCheck(){
+  var box=document.getElementById('leagueMathCheck');
+  if(!box) return;
+  var adv=parseInt(document.getElementById('leagueAdv').value)||0;
+  var isPow2=adv>0 && (adv & (adv-1))===0;
+  var line='🧮 Top <strong>'+adv+'</strong> team(s) advance to the knockout bracket.';
+  var warn='';
+  if(!isPow2) warn='🔴 '+adv+' is not a valid bracket size — it must be 2, 4, 8, or 16. Adjust teams advancing.';
+  box.innerHTML=line+(warn?'<div style="color:var(--red);margin-top:.4rem">'+warn+'</div>':'<div style="color:var(--green);margin-top:.4rem">✅ Valid setup</div>');
+}
+// Live validation for Swiss format: auto-qualify + playoff-advance must sum to
+// a valid bracket size, and enough teams must exist for the configured stages.
+function updateSwissMathCheck(){
+  var box=document.getElementById('swissMathCheck');
+  if(!box) return;
+  var autoQ=parseInt(document.getElementById('swissAutoQual').value)||0;
+  var poTeams=parseInt(document.getElementById('swissPlayoffTeams').value)||0;
+  var poAdv=parseInt(document.getElementById('swissPlayoffAdv').value)||0;
+  var bracketSize=autoQ+poAdv;
+  var isPow2=bracketSize>0 && (bracketSize & (bracketSize-1))===0;
+  var lines=[];
+  lines.push('🧮 Auto-Qualify <strong>'+autoQ+'</strong> + Play-off winners <strong>'+poAdv+'</strong> = <strong>'+bracketSize+'</strong> bracket teams');
+  var warn='';
+  if(poAdv>poTeams) warn='⚠️ Play-off winners ('+poAdv+') can\'t exceed teams entering the play-off round ('+poTeams+').';
+  else if(!isPow2) warn='🔴 '+bracketSize+' is not a valid bracket size — it must be 2, 4, 8, or 16. Adjust Auto-Qualify or Play-off winners.';
+  box.innerHTML=lines.join('<br>')+(warn?'<div style="color:'+(warn.indexOf('🔴')===0?'var(--red)':'#e8b339')+';margin-top:.4rem">'+warn+'</div>':'<div style="color:var(--green);margin-top:.4rem">✅ Valid setup</div>');
 }
 // Live validation for Groups format: total teams, auto-qualifiers, best-3rd wildcards,
 // and whether the resulting bracket size is buildable (2/4/8/16).
@@ -1362,14 +1445,23 @@ function backToList(){
 }
 function renameTournament(){
   const tour=getTour();if(!tour)return;
-  const n=prompt('Tournament name:',tour.name||'');
-  if(n===null) return;
+  document.getElementById('renameTourInput').value=tour.name||'';
+  document.getElementById('renameTourOverlay').classList.add('open');
+  setTimeout(function(){document.getElementById('renameTourInput').focus();},50);
+}
+function closeRenameTour(){
+  document.getElementById('renameTourOverlay').classList.remove('open');
+}
+function saveRenameTour(){
+  const tour=getTour();if(!tour)return;
+  const n=document.getElementById('renameTourInput').value;
   const trimmed=n.trim();
   if(!trimmed){toast('Name cannot be empty',true);return;}
   tour.name=trimmed;
   sdb();
   document.getElementById('dashTitle').textContent=tour.name;
   renderList();
+  closeRenameTour();
   toast('✅ Tournament renamed to "'+trimmed+'"');
 }
 
@@ -2820,6 +2912,83 @@ function getChampion(tour){
   const fr=mainRounds[mainRounds.length-1];
   return (fr.matches[0]&&fr.matches[0].winner)?fr.matches[0].winner:null;
 }
+// ─── Award auto-fill helpers (Phase 2) ──────────────────────────
+// These mirror the calculations used in the animation builder (~line 5150+).
+// Phase 3 should refactor the animation code to call these same functions
+// instead of recomputing inline, to avoid the two copies drifting apart.
+function getRunnerUp(tour){
+  if(!tour||!tour.bracketRounds||!tour.bracketRounds.length) return null;
+  const mainRounds=tour.bracketRounds.filter(r=>r.matches[0]&&!r.matches[0].is3rd);
+  if(!mainRounds.length) return null;
+  const fr=mainRounds[mainRounds.length-1];
+  return (fr.matches[0]&&fr.matches[0].loser)?fr.matches[0].loser:null;
+}
+function get3rdPlaceWinner(tour){
+  if(!tour||!tour.bracketRounds) return null;
+  const r=tour.bracketRounds.find(r=>r.matches[0]&&r.matches[0].is3rd);
+  return (r&&r.matches[0]&&r.matches[0].winner)?r.matches[0].winner:null;
+}
+function getGoldenBootWinner(tour){
+  if(!tour) return null;
+  const teamGoalsMap={};
+  (tour.teams||[]).forEach(function(t){teamGoalsMap[t.id]={name:t.name,id:t.id,goals:t.goalsFor||0,coach:t.coach||''};});
+  (tour.bracketRounds||[]).forEach(function(r){
+    r.matches.forEach(function(m){
+      if(!m.t1||!m.t2) return;
+      const i1=m.t1.id,i2=m.t2.id;
+      if(!teamGoalsMap[i1]||!teamGoalsMap[i2]) return;
+      if(m.leg1h!=null){teamGoalsMap[i1].goals+=m.leg1h;teamGoalsMap[i2].goals+=m.leg1a;}
+      if(m.et1h!=null){teamGoalsMap[i1].goals+=m.et1h;teamGoalsMap[i2].goals+=m.et1a;}
+      if(m.leg2h!=null){teamGoalsMap[i2].goals+=m.leg2h;teamGoalsMap[i1].goals+=m.leg2a;}
+      if(m.et2h!=null){teamGoalsMap[i2].goals+=m.et2h;teamGoalsMap[i1].goals+=m.et2a;}
+    });
+  });
+  const arr=Object.values(teamGoalsMap);
+  if(!arr.length) return null;
+  return arr.sort(function(a,b){return b.goals-a.goals;})[0]||null;
+}
+function getBestDefenseWinner(tour){
+  if(!tour) return null;
+  function normScore(m){
+    if(m.homeScore!=null) return {hs:m.homeScore, as:m.awayScore};
+    if(m.leg1h!=null)     return {hs:(m.leg1h||0)+(m.et1h||0), as:(m.leg1a||0)+(m.et1a||0)};
+    return null;
+  }
+  const groupDone=(tour.matches||[]).filter(function(m){return m.done&&m.homeScore!=null;});
+  const bracketDone=(tour.bracketRounds||[]).reduce(function(acc,r){
+    return acc.concat(r.matches.filter(function(m){return m.done&&m.leg1h!=null;}));
+  },[]);
+  const allDone=groupDone.concat(bracketDone);
+  const teamStats={};
+  (tour.teams||[]).forEach(function(t){
+    teamStats[t.name]={name:t.name,scored:0,conceded:0,cleanSheets:0,played:0,coach:t.coach||''};
+  });
+  allDone.forEach(function(m){
+    const sc=normScore(m); if(!sc) return;
+    const h=m.homeName||(m.t1&&m.t1.name)||null;
+    const a=m.awayName||(m.t2&&m.t2.name)||null;
+    if(h&&teamStats[h]){teamStats[h].scored+=sc.hs;teamStats[h].conceded+=sc.as;teamStats[h].played++;if(sc.as===0)teamStats[h].cleanSheets++;}
+    if(a&&teamStats[a]){teamStats[a].scored+=sc.as;teamStats[a].conceded+=sc.hs;teamStats[a].played++;if(sc.hs===0)teamStats[a].cleanSheets++;}
+  });
+  const tsArr=Object.values(teamStats).filter(function(t){return t.played>0;});
+  if(!tsArr.length) return null;
+  return tsArr.sort(function(a,b){
+    if(a.conceded!==b.conceded)return a.conceded-b.conceded;
+    return b.cleanSheets-a.cleanSheets;
+  })[0]||null;
+}
+// ─── Award image lookup (Phase 3) ───────────────────────────────
+// Awards Manager (db.awards) is now the source of truth for trophy images.
+// Falls back to the old per-tournament Knockout-tab upload (tour.winnerTrophyImg /
+// tour.goldenBootImg) for tournaments that have that but no matching award yet,
+// then finally to a default image (or null to show text-only).
+function getAwardImage(tour,type,legacyImg,defaultImg){
+  if(tour&&db&&db.awards){
+    const match=db.awards.find(function(a){return a.tournamentId===tour.id&&a.type===type&&a.img;});
+    if(match) return match.img;
+  }
+  return legacyImg||defaultImg||null;
+}
 function updateLiveAnimButtons(tour){
   const wBtn=document.getElementById('winnerAnimBtn');
   const jBtn=document.getElementById('journeyAnimBtn');
@@ -3078,7 +3247,7 @@ function renderBracket(){
   const finalRound=rounds[rounds.length-1];
   const fm=finalRound.matches[0];
   const champion=fm&&fm.winner?fm.winner:null;
-  const cupSrc=tour.winnerTrophyImg||'efh_cup.png';
+  const cupSrc=getAwardImage(tour,'trophy_1st',tour.winnerTrophyImg,'efh_cup.png');
 
   // Top half: first half of each round's matches
   let topHtml=preFinalRounds.map((r,ri)=>{
@@ -3406,6 +3575,119 @@ function deleteTournament(){
 // ═══════════════════════════════════════════
 // AWARDS / TREASURE HALL
 // ═══════════════════════════════════════════
+var _pendingUnfinishedTid=null;
+
+function openSeasonPicker(){
+  renderSeasonPickerList();
+  var wrap=document.getElementById('seasonPickerWrap');
+  wrap.style.display='flex';
+  requestAnimationFrame(function(){
+    document.getElementById('seasonPickerSheet').style.transform='translateY(0)';
+  });
+}
+
+function closeSeasonPicker(){
+  var sheet=document.getElementById('seasonPickerSheet');
+  sheet.style.transform='translateY(100%)';
+  setTimeout(function(){document.getElementById('seasonPickerWrap').style.display='none';},300);
+}
+
+function renderSeasonPickerList(){
+  var el=document.getElementById('seasonPickerList');
+  var tours=(db.tournaments||[]).slice().sort(function(a,b){
+    var ta=parseInt((a.id||'').split('_')[1])||0;
+    var tb=parseInt((b.id||'').split('_')[1])||0;
+    return tb-ta;
+  });
+  if(!tours.length){el.innerHTML='<div class="empty">No tournaments created yet</div>';return;}
+  el.innerHTML=tours.map(function(t){
+    var finished=t.status==='finished';
+    var badge=finished
+      ?'<span style="background:rgba(46,204,113,.15);color:var(--green);border:1px solid var(--green);padding:.15rem .5rem;border-radius:6px;font-size:.6rem;font-weight:800;letter-spacing:.5px;flex-shrink:0">✅ FINISHED</span>'
+      :'<span style="background:rgba(230,126,34,.15);color:#e67e22;border:1px solid #e67e22;padding:.15rem .5rem;border-radius:6px;font-size:.6rem;font-weight:800;letter-spacing:.5px;flex-shrink:0">⚠️ NOT FINISHED</span>';
+    return '<div onclick="handleSeasonPick(\''+t.id+'\')" style="display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.8rem .9rem;background:var(--card2);border:1px solid var(--border);border-radius:10px;margin-bottom:.5rem;cursor:pointer">'+
+      '<div style="min-width:0">'+
+        '<div style="font-family:\'Anton\',sans-serif;font-size:.9rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+t.name+'</div>'+
+        '<div style="font-size:.65rem;color:var(--muted)">'+(t.season||'')+'</div>'+
+      '</div>'+badge+
+    '</div>';
+  }).join('');
+}
+
+function handleSeasonPick(tid){
+  var tour=(db.tournaments||[]).find(function(t){return t.id===tid;});
+  if(!tour) return;
+  if(tour.status!=='finished'){
+    _pendingUnfinishedTid=tid;
+    document.getElementById('seasonWarnText').textContent='"'+tour.name+'" hasn\'t finished yet — the champion, golden boot, and other award data may not be final. Select it anyway?';
+    document.getElementById('seasonWarnOverlay').style.display='flex';
+    return;
+  }
+  applySeasonSelection(tid);
+}
+
+function confirmUnfinishedSelect(){
+  document.getElementById('seasonWarnOverlay').style.display='none';
+  if(_pendingUnfinishedTid) applySeasonSelection(_pendingUnfinishedTid);
+  _pendingUnfinishedTid=null;
+}
+
+function cancelUnfinishedSelect(){
+  document.getElementById('seasonWarnOverlay').style.display='none';
+  _pendingUnfinishedTid=null;
+}
+
+function applySeasonSelection(tid){
+  var tour=(db.tournaments||[]).find(function(t){return t.id===tid;});
+  if(!tour) return;
+  document.getElementById('awardTourId').value=tid;
+  var label=document.getElementById('awardSeasonLabel');
+  label.textContent=tour.name+(tour.season?' — '+tour.season:'')+(tour.status==='finished'?'':' (not finished)');
+  label.style.color=tour.status==='finished'?'var(--text)':'#e67e22';
+  closeSeasonPicker();
+  autoFillAward();
+}
+
+// ─── Auto-fill Recipient / Name / Year based on award type + selected tournament (Phase 2) ───
+var _awardAutoVals={name:'',recipient:'',year:''};
+
+function autoFillAward(){
+  var tid=document.getElementById('awardTourId').value;
+  var type=document.getElementById('awardType').value;
+  if(!tid) return;
+  var tour=(db.tournaments||[]).find(function(t){return t.id===tid;});
+  if(!tour) return;
+
+  var recipientObj=null, roleLabel='';
+  if(type==='trophy_1st'||type==='medal_1st'){recipientObj=getChampion(tour);roleLabel='Champions';}
+  else if(type==='medal_2nd'){recipientObj=getRunnerUp(tour);roleLabel='Runner-up';}
+  else if(type==='medal_3rd'){recipientObj=get3rdPlaceWinner(tour);roleLabel='3rd Place';}
+  else if(type==='golden_boot'){recipientObj=getGoldenBootWinner(tour);roleLabel='Golden Boot';}
+  else if(type==='best_defense'){recipientObj=getBestDefenseWinner(tour);roleLabel='Best Defense';}
+
+  var recipientName=recipientObj?recipientObj.name:'';
+  var suggestedName=roleLabel?(tour.name+' '+roleLabel):'';
+  var yearMatch=(tour.season||'').match(/\d{4}/);
+  var suggestedYear=yearMatch?yearMatch[0]:new Date().getFullYear();
+
+  var recEl=document.getElementById('awardRecipient');
+  var nameEl=document.getElementById('awardName');
+  var yearEl=document.getElementById('awardYear');
+
+  if(!recEl.value.trim()||recEl.value===_awardAutoVals.recipient){
+    if(recipientName){
+      recEl.value=recipientName;
+    } else if(type!=='custom'){
+      recEl.value='';
+      toast('Winner not determined yet for this award — enter manually',true);
+    }
+  }
+  if(suggestedName&&(!nameEl.value.trim()||nameEl.value===_awardAutoVals.name)) nameEl.value=suggestedName;
+  if(!yearEl.value.trim()||yearEl.value===_awardAutoVals.year) yearEl.value=suggestedYear;
+
+  _awardAutoVals={name:nameEl.value,recipient:recEl.value,year:yearEl.value};
+}
+
 function previewAwardImg(input){
   if(!input.files||!input.files[0]) return;
   var reader=new FileReader();
@@ -3421,10 +3703,13 @@ function saveAward(){
   var type=document.getElementById('awardType').value;
   var name=document.getElementById('awardName').value.trim();
   var recipient=document.getElementById('awardRecipient').value.trim();
-  var season=document.getElementById('awardSeason').value.trim();
+  var tourId=document.getElementById('awardTourId').value||null;
+  var tour=tourId?(db.tournaments||[]).find(function(t){return t.id===tourId;}):null;
+  var season=tour?(tour.season||tour.name):'';
   var year=document.getElementById('awardYear').value.trim();
   var imgData=document.getElementById('awardImgZone')._imgData||null;
   if(!name||!recipient){toast('Award name and recipient are required',true);return;}
+  if(!tourId){toast('Select a season/tournament first',true);return;}
   if(!db.awards) db.awards=[];
   var award={
     id:'aw_'+Date.now(),
@@ -3432,6 +3717,7 @@ function saveAward(){
     name:name,
     recipient:recipient,
     season:season,
+    tournamentId:tourId,
     year:year||new Date().getFullYear(),
     img:imgData,
     createdAt:Date.now()
@@ -3442,10 +3728,14 @@ function saveAward(){
   // Clear form
   document.getElementById('awardName').value='';
   document.getElementById('awardRecipient').value='';
-  document.getElementById('awardSeason').value='';
+  document.getElementById('awardTourId').value='';
+  var lbl=document.getElementById('awardSeasonLabel');
+  lbl.textContent='Tap to select a tournament...';
+  lbl.style.color='var(--muted)';
   document.getElementById('awardYear').value='';
   document.getElementById('awardImgPreview').innerHTML='🏆';
   document.getElementById('awardImgZone')._imgData=null;
+  _awardAutoVals={name:'',recipient:'',year:''};
   toast('🏅 Award saved!');
 }
 
@@ -3461,18 +3751,43 @@ function renderAwardsList(){
   if(!el)return;
   var awards=db.awards||[];
   if(!awards.length){el.innerHTML='<div class="empty">No awards added yet</div>';return;}
-  var typeLabels={'trophy_1st':'🏆 Champion Trophy','medal_1st':'🥇 Gold Medal','medal_2nd':'🥈 Silver Medal','medal_3rd':'🥉 Bronze Medal','golden_boot':'👟 Golden Boot','best_defense':'🛡️ Best Defense','custom':'🎖️ Custom'};
   el.innerHTML=awards.map(function(a){
-    return '<div style="display:flex;align-items:center;gap:.7rem;padding:.7rem .8rem;background:var(--card2);border:1px solid var(--border);border-radius:10px;margin-bottom:.5rem">'+
-      (a.img?'<img src="'+a.img+'" style="width:40px;height:40px;object-fit:contain;border-radius:6px;flex-shrink:0">':'<div style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0">'+(typeLabels[a.type]||'🏅').split(' ')[0]+'</div>')+
+    return '<div onclick="openAwardDetail(\''+a.id+'\')" style="display:flex;align-items:center;gap:.7rem;padding:.7rem .8rem;background:var(--card2);border:1px solid var(--border);border-radius:10px;margin-bottom:.5rem;cursor:pointer">'+
+      (a.img?'<img src="'+a.img+'" style="width:40px;height:40px;object-fit:contain;border-radius:6px;flex-shrink:0">':'<div style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0">'+(AWARD_TYPE_LABELS[a.type]||'🏅').split(' ')[0]+'</div>')+
       '<div style="flex:1;min-width:0">'+
         '<div style="font-family:\'Anton\',sans-serif;font-size:.82rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+a.name+'</div>'+
         '<div style="font-size:.6rem;color:var(--gold)">'+a.recipient+(a.season?' · '+a.season:'')+(a.year?' · '+a.year:'')+'</div>'+
-        '<div style="font-size:.55rem;color:var(--muted)">'+(typeLabels[a.type]||a.type)+'</div>'+
+        '<div style="font-size:.55rem;color:var(--muted)">'+(AWARD_TYPE_LABELS[a.type]||a.type)+'</div>'+
       '</div>'+
-      '<button onclick="deleteAward(\''+a.id+'\')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:1rem;flex-shrink:0">🗑</button>'+
+      '<button onclick="event.stopPropagation();deleteAward(\''+a.id+'\')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:1rem;flex-shrink:0">🗑</button>'+
     '</div>';
   }).join('');
+}
+
+var AWARD_TYPE_LABELS={'trophy_1st':'🏆 Champion Trophy','medal_1st':'🥇 Gold Medal','medal_2nd':'🥈 Silver Medal','medal_3rd':'🥉 Bronze Medal','golden_boot':'👟 Golden Boot','best_defense':'🛡️ Best Defense','custom':'🎖️ Custom'};
+
+function openAwardDetail(id){
+  var a=(db.awards||[]).find(function(x){return x.id===id;});
+  if(!a) return;
+  var tour=a.tournamentId?(db.tournaments||[]).find(function(t){return t.id===a.tournamentId;}):null;
+  var body=document.getElementById('awardDetailBody');
+  body.innerHTML=
+    (a.img?'<div style="text-align:center;margin-bottom:1rem"><img src="'+a.img+'" style="max-width:100%;max-height:220px;object-fit:contain;border-radius:10px;filter:drop-shadow(0 0 16px rgba(212,175,55,0.5))"></div>'
+      :'<div style="text-align:center;font-size:3rem;margin-bottom:1rem">'+(AWARD_TYPE_LABELS[a.type]||'🏅').split(' ')[0]+'</div>')+
+    '<div style="font-family:\'Anton\',sans-serif;font-size:1.1rem;color:var(--gold);text-align:center;letter-spacing:1px;margin-bottom:.3rem">'+a.name+'</div>'+
+    '<div style="text-align:center;font-size:.75rem;color:var(--muted);margin-bottom:1rem">'+(AWARD_TYPE_LABELS[a.type]||a.type)+'</div>'+
+    '<div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:.8rem .9rem">'+
+      '<div style="display:flex;justify-content:space-between;padding:.35rem 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted);font-size:.75rem">Recipient</span><span style="color:var(--text);font-weight:700;font-size:.85rem">'+a.recipient+'</span></div>'+
+      '<div style="display:flex;justify-content:space-between;padding:.35rem 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted);font-size:.75rem">Tournament</span><span style="color:var(--text);font-size:.85rem;text-align:right">'+(tour?tour.name:(a.season||'—'))+'</span></div>'+
+      '<div style="display:flex;justify-content:space-between;padding:.35rem 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted);font-size:.75rem">Season</span><span style="color:var(--text);font-size:.85rem">'+(a.season||'—')+'</span></div>'+
+      '<div style="display:flex;justify-content:space-between;padding:.35rem 0"><span style="color:var(--muted);font-size:.75rem">Year</span><span style="color:var(--text);font-size:.85rem">'+(a.year||'—')+'</span></div>'+
+    '</div>';
+  document.getElementById('awardDetailDeleteBtn').setAttribute('onclick',"closeAwardDetail();deleteAward('"+a.id+"')");
+  document.getElementById('awardDetailOverlay').style.display='flex';
+}
+
+function closeAwardDetail(){
+  document.getElementById('awardDetailOverlay').style.display='none';
 }
 
 
@@ -5019,7 +5334,7 @@ function playWinnerRevealAnim(tour){
   openAnimOverlay();
   _animDoneFn=closeAnimOverlay;
   var content=document.getElementById('animContent');
-  var cupSrc=tour.winnerTrophyImg||'efh_cup.png';
+  var cupSrc=getAwardImage(tour,'trophy_1st',tour.winnerTrophyImg,'efh_cup.png');
   content.innerHTML=
     '<div class="anim-eyebrow anim-line" style="animation-delay:.1s">🏆 '+(tour.name||'EFH')+' Champion 🏆</div>'+
     '<img src="'+cupSrc+'" class="anim-cup-img" onerror="this.style.display=\'none\'">'+
@@ -5061,48 +5376,11 @@ function playJourneyAnim(tour){
   var totalTeams=(tour.teams||[]).length;
   var totalMatches=countTotalMatches(tour);
 
-  // Golden boot — top-scoring TEAM combining group-stage goalsFor with bracket goals
-  var teamGoalsMap={};
-  (tour.teams||[]).forEach(function(t){teamGoalsMap[t.id]={name:t.name,id:t.id,goals:t.goalsFor||0,coach:t.coach||''};});
-  (tour.bracketRounds||[]).forEach(function(r){
-    r.matches.forEach(function(m){
-      if(!m.t1||!m.t2) return;
-      var i1=m.t1.id,i2=m.t2.id;
-      if(!teamGoalsMap[i1]||!teamGoalsMap[i2]) return;
-      if(m.leg1h!=null){teamGoalsMap[i1].goals+=m.leg1h;teamGoalsMap[i2].goals+=m.leg1a;}
-      if(m.et1h!=null){teamGoalsMap[i1].goals+=m.et1h;teamGoalsMap[i2].goals+=m.et1a;}
-      if(m.leg2h!=null){teamGoalsMap[i2].goals+=m.leg2h;teamGoalsMap[i1].goals+=m.leg2a;}
-      if(m.et2h!=null){teamGoalsMap[i2].goals+=m.et2h;teamGoalsMap[i1].goals+=m.et2a;}
-    });
-  });
-  var topGoalTeam=Object.values(teamGoalsMap).sort(function(a,b){return b.goals-a.goals;})[0]||null;
-
-  // Best attack/defense — only teams that actually played at least 1 scored match
-  var teamStats={};
-  (tour.teams||[]).forEach(function(t){
-    teamStats[t.name]={name:t.name,scored:0,conceded:0,cleanSheets:0,played:0,coach:t.coach||''};
-  });
-  allDone.forEach(function(m){
-    var sc=normScore(m); if(!sc) return;
-    var h=m.homeName||(m.t1&&m.t1.name)||null;
-    var a=m.awayName||(m.t2&&m.t2.name)||null;
-    if(h&&teamStats[h]){
-      teamStats[h].scored+=sc.hs;teamStats[h].conceded+=sc.as;
-      teamStats[h].played++;if(sc.as===0)teamStats[h].cleanSheets++;
-    }
-    if(a&&teamStats[a]){
-      teamStats[a].scored+=sc.as;teamStats[a].conceded+=sc.hs;
-      teamStats[a].played++;if(sc.hs===0)teamStats[a].cleanSheets++;
-    }
-  });
-  // Bug fix: only consider teams that actually played (played > 0) to prevent
-  // teams with zero matches appearing as "best defense" with 0 goals conceded.
-  var tsArr=Object.values(teamStats).filter(function(t){return t.played>0;});
-  var bestAttack=[...tsArr].sort(function(a,b){return b.scored-a.scored;})[0]||null;
-  var bestDefense=[...tsArr].sort(function(a,b){
-    if(a.conceded!==b.conceded)return a.conceded-b.conceded;
-    return b.cleanSheets-a.cleanSheets;
-  })[0]||null;
+  // Golden boot + Best Defense — now computed via the shared functions added in
+  // Phase 2 (getGoldenBootWinner / getBestDefenseWinner, ~line 2844 area) so this
+  // matches exactly what the Awards Manager auto-fill uses. No more duplicate calc.
+  var topGoalTeam=getGoldenBootWinner(tour);
+  var bestDefense=getBestDefenseWinner(tour);
 
   // Biggest win(s) — search all matches using normalised scores
   var maxMargin=0;
@@ -5224,7 +5502,7 @@ function playJourneyAnim(tour){
 
   // 5. Golden boot
   if(topGoalTeam&&topGoalTeam.goals>0){
-    slides.push({type:'golden_boot',team:topGoalTeam.name,goals:topGoalTeam.goals,coach:topGoalTeam.coach,bootImg:tour.goldenBootImg||null});
+    slides.push({type:'golden_boot',team:topGoalTeam.name,goals:topGoalTeam.goals,coach:topGoalTeam.coach,bootImg:getAwardImage(tour,'golden_boot',tour.goldenBootImg,null)});
   }
 
   // 6. Best defense
@@ -5421,7 +5699,7 @@ function playJourneyAnim(tour){
       animAfter(900+s.lines.length*900,nextSlide);
 
     } else if(s.type==='reveal'){
-      var cupSrc=s.tour.winnerTrophyImg||'efh_cup.png';
+      var cupSrc=getAwardImage(s.tour,'trophy_1st',s.tour.winnerTrophyImg,'efh_cup.png');
       content.innerHTML=
         '<img src="'+cupSrc+'" class="anim-cup-img" onerror="this.style.display=\'none\'">'+
         '<div class="anim-eyebrow anim-line" style="animation-delay:.2s">'+tname+' \u00B7 Champions</div>'+
@@ -5700,6 +5978,12 @@ function runHealthCheck(){
       var isPow2=bracketSize>0 && (bracketSize & (bracketSize-1))===0;
       if(!isPow2) issues.push('🔴 "'+label+'": Swiss autoQualify('+autoQ+') + playoffAdvance('+poAdv+') = '+bracketSize+', not a valid bracket size (needs 2/4/8/16). Bracket will fail to build.');
       if((t.teams||[]).length < autoQ+poTeams) issues.push('🔴 "'+label+'": needs at least '+(autoQ+poTeams)+' teams for current Swiss settings, only has '+(t.teams||[]).length+'.');
+    }
+    // League math check
+    if(t.format==='league'){
+      var lAdv=t.leagueAdv||0;
+      var lIsPow2=lAdv>0 && (lAdv & (lAdv-1))===0;
+      if(!lIsPow2) issues.push('🔴 "'+label+'": League advancing count ('+lAdv+') is not a valid bracket size (needs 2/4/8/16). Bracket will fail to build.');
     }
     // Groups math check
     if(t.format==='groups'){

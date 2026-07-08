@@ -2254,7 +2254,7 @@ function renderPlayoffs(){
     }).join('');
     var fm=finalRound.matches[0];
     var champion=fm&&fm.winner?fm.winner.name:null;
-    var cupSrc=tour.winnerTrophyImg||'efh_cup.png';
+    var cupSrc=getAwardImage(tour,'trophy_1st',tour.winnerTrophyImg,'efh_cup.png');
     var centerHtml='<div class="vlb-center">'
       +'<div class="vlb-round-label">FINAL</div>'
       +'<div class="vlb-final-row">'
@@ -2603,7 +2603,8 @@ function updateWinnerTicker(){
 function updateTrophySplash(tour){
   var splash=document.getElementById('trophySplash');
   if(!splash) return;
-  if(!tour||!tour.winnerTickerOn||!tour.winnerTrophyImg){splash.style.display='none';return;}
+  var imgSrc=tour?getAwardImage(tour,'trophy_1st',tour.winnerTrophyImg,null):null;
+  if(!tour||!tour.winnerTickerOn||!imgSrc){splash.style.display='none';return;}
   var wn='';
   if(tour.bracketRounds&&tour.bracketRounds.length){
     var frs=tour.bracketRounds.filter(function(r){return r.matches[0]&&!r.matches[0].is3rd;});
@@ -2612,7 +2613,7 @@ function updateTrophySplash(tour){
   }
   splash.innerHTML='<div style="text-align:center;padding:1.2rem .8rem 0">'+
     '<div style="font-family:\'Oswald\',sans-serif;font-size:.72rem;letter-spacing:3px;color:var(--gold);margin-bottom:.5rem;text-shadow:0 0 12px rgba(201,168,76,.6);text-transform:uppercase">🏆 '+(tour.name||'EFH')+' Champion 🏆</div>'+
-    '<img src="'+tour.winnerTrophyImg+'" alt="Winner Trophy" style="width:70%;max-width:260px;height:auto;object-fit:contain;display:block;margin:0 auto;filter:drop-shadow(0 0 22px rgba(201,168,76,0.95)) drop-shadow(0 0 45px rgba(201,168,76,0.55));animation:trophyGlow 2.5s ease-in-out infinite alternate">'+
+    '<img src="'+imgSrc+'" alt="Winner Trophy" style="width:70%;max-width:260px;height:auto;object-fit:contain;display:block;margin:0 auto;filter:drop-shadow(0 0 22px rgba(201,168,76,0.95)) drop-shadow(0 0 45px rgba(201,168,76,0.55));animation:trophyGlow 2.5s ease-in-out infinite alternate">'+
     (wn?'<div style="font-family:\'Anton\',sans-serif;font-size:1.5rem;letter-spacing:4px;color:var(--gold);margin-top:.6rem;text-shadow:0 0 20px rgba(201,168,76,.8)">'+wn+'</div>':'')+
     '<div style="font-family:\'Oswald\',sans-serif;font-size:.62rem;color:var(--muted);letter-spacing:2px;margin-top:.2rem;text-transform:uppercase">Elite Football Hub Champions</div>'+
     '<div style="height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:1rem 0 .3rem"></div>'+
@@ -2806,6 +2807,17 @@ function getChampion(tour){
   var fr=mainRounds[mainRounds.length-1];
   return (fr.matches[0]&&fr.matches[0].winner)?fr.matches[0].winner:null;
 }
+// ─── Award image lookup (Phase 3 — mirrors admin_dashboard.html) ───────────
+// Awards Manager (db.awards, set in admin) is the source of truth for trophy
+// images shown on the public page. Falls back to the legacy per-tournament
+// winnerTrophyImg/goldenBootImg fields, then a default.
+function getAwardImage(tour,type,legacyImg,defaultImg){
+  if(tour&&db&&db.awards){
+    var match=db.awards.find(function(a){return a.tournamentId===tour.id&&a.type===type&&a.img;});
+    if(match) return match.img;
+  }
+  return legacyImg||defaultImg||null;
+}
 function openAnimOverlay(){
   var ov=document.getElementById('animOverlay');
   var fx=document.getElementById('animFx');
@@ -2835,7 +2847,7 @@ function playWinnerRevealAnim(tour,done){
   openAnimOverlay();
   _animDoneFn=function(){ closeAnimOverlay(done); };
   var content=document.getElementById('animContent');
-  var cupSrc=tour.winnerTrophyImg||'efh_cup.png';
+  var cupSrc=getAwardImage(tour,'trophy_1st',tour.winnerTrophyImg,'efh_cup.png');
   content.innerHTML=
     '<div class="anim-eyebrow anim-line" style="animation-delay:.1s">🏆 '+(tour.name||'EFH')+' Champion 🏆</div>'+
     '<img src="'+cupSrc+'" class="anim-cup-img" onerror="this.style.display=\'none\'">'+
@@ -3022,7 +3034,7 @@ function playJourneyAnim(tour,done){
   slides.push({type:'stats',totalTeams:totalTeams,totalMatches:totalMatches,totalGoals:totalGoals});
 
   if(topGoalTeam&&topGoalTeam.goals>0){
-    slides.push({type:'golden_boot',team:topGoalTeam.name,goals:topGoalTeam.goals,coach:topGoalTeam.coach,bootImg:tour.goldenBootImg||null});
+    slides.push({type:'golden_boot',team:topGoalTeam.name,goals:topGoalTeam.goals,coach:topGoalTeam.coach,bootImg:getAwardImage(tour,'golden_boot',tour.goldenBootImg,null)});
   }
 
   if(bestDefense&&(bestDefense.conceded>=0)){
@@ -3209,7 +3221,7 @@ function playJourneyAnim(tour,done){
       animAfter(900+s.lines.length*900,nextSlide);
 
     } else if(s.type==='reveal'){
-      var cupSrc=s.tour.winnerTrophyImg||'efh_cup.png';
+      var cupSrc=getAwardImage(s.tour,'trophy_1st',s.tour.winnerTrophyImg,'efh_cup.png');
       content.innerHTML=
         '<img src="'+cupSrc+'" class="anim-cup-img" onerror="this.style.display=\'none\'">'+
         '<div class="anim-eyebrow anim-line" style="animation-delay:.2s">'+tname+' · Champions</div>'+
