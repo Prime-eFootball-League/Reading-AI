@@ -888,14 +888,15 @@ tbody tr:hover td{background:var(--card2)!important;filter:none}
   <div><span class="hdr-live" id="livebadge"><span class="live-dot"></span><span class="sync-spinner"></span><span class="live-text"></span></span></div>
 </div>
 
-<div class="t-tabs" id="tTabs"></div>
 <div id="regTabBar" style="border-bottom:1px solid var(--border);background:var(--tab-bg);display:flex">
   <button class="itab active" id="it-tourney" style="color:var(--gold)" onclick="showTourTab()">🏆 Tournaments</button>
   <button class="itab" id="it-reg" onclick="showRegTab()">🏅 Teams</button>
   <button class="itab" id="it-past" onclick="showPastTab()">🏁 Past Seasons</button>
-  <button class="itab" id="it-treasury" onclick="showTreasuryTab()">🏛️ Treasure Hall</button>
+  <button class="itab" id="it-treasury" onclick="showTreasuryTab()">🏛️ Award Hall</button>
 </div>
 
+<div id="secTourList" style="padding:.8rem;display:none"></div>
+<div id="tourNameHeader" class="past-view-header" style="display:none"></div>
 <div class="itabs" id="iTabs" style="display:none">
   <button class="itab active" id="it-table">📊 Table</button>
   <button class="itab" id="it-results">✅ Results</button>
@@ -970,11 +971,58 @@ var activeTopTab='tourney'; // 'tourney' | 'reg' | 'past' — tracks which top t
 var registryTeams=[];
 
 function getTour(){return db.tournaments.find(function(t){return t.id===activeTid;})||null;}
+
+// Centralized top-level section visibility — every top-tab function MUST go
+// through this so switching tabs never leaves a stale section (e.g. Award Hall)
+// visible underneath another one.
+var TOP_LEVEL_SECTIONS=['secRegistry','secPast','secTreasury','secTourList','tourNameHeader','iTabs','tourContent'];
+function hideAllTopSections(){
+  TOP_LEVEL_SECTIONS.forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) el.style.display='none';
+  });
+}
+function setTopTabActive(tab){
+  activeTopTab=tab;
+  ['it-reg','it-past','it-tourney','it-treasury'].forEach(function(id){
+    var b=document.getElementById(id);
+    if(b) b.classList.remove('active');
+  });
+  var map={tourney:'it-tourney',reg:'it-reg',past:'it-past',treasury:'it-treasury'};
+  var btn=document.getElementById(map[tab]);
+  if(btn) btn.classList.add('active');
+}
+
 function openTour(tid){
   activeTid=tid;
-  document.querySelectorAll('.t-tab').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-tid')===tid);});
+  hideAllTopSections();
+  setTopTabActive('tourney');
+  var tour=getTour();
+  var tours=(db.tournaments||[]).filter(function(t){return t.status!=='finished';});
+  var showBack=tours.length>1;
+  var hEl=document.getElementById('tourNameHeader');
+  hEl.innerHTML=(showBack?'<button class="past-back" onclick="renderTourList()">&#8592;</button>':'')+
+    '<div class="past-view-name">'+(tour?tour.name:'')+'</div>';
+  hEl.style.display='flex';
   document.getElementById('iTabs').style.display='flex';
+  document.getElementById('tourContent').style.display='block';
   showSec('table');
+}
+
+function renderTourList(){
+  hideAllTopSections();
+  setTopTabActive('tourney');
+  var el=document.getElementById('secTourList');
+  el.style.display='block';
+  var tours=(db.tournaments||[]).filter(function(t){return t.status!=='finished';});
+  var h='<div style="font-family:\'Anton\',sans-serif;font-size:1.2rem;letter-spacing:3px;color:var(--gold);text-align:center;margin-bottom:1rem;text-transform:uppercase">Active Tournaments</div>';
+  tours.forEach(function(t){
+    h+='<div class="past-card" onclick="openTour(\''+t.id+'\')">'+
+      '<div class="past-card-name">'+t.name+'</div>'+
+      '<div class="past-card-meta">'+(t.season||'')+'</div>'+
+      '</div>';
+  });
+  el.innerHTML=h;
 }
 
 function showSec(name){
@@ -1000,42 +1048,23 @@ function showSec(name){
   else if(name==='rules') renderRules();
 }
 
-// Shared helper: hides every top-level section + resets every tab button,
-// so each show*Tab() function only has to turn its own section back on.
-// (Fixes: Treasure Hall / any other section staying visible underneath
-// whichever tab you switch to next.)
-function hideAllTopSections(){
-  ['secRegistry','secPast','tourContent','secTreasury'].forEach(function(id){
-    var el=document.getElementById(id);if(el)el.style.display='none';
-  });
-  ['it-reg','it-past','it-tourney','it-treasury'].forEach(function(id){
-    var b=document.getElementById(id);if(b)b.classList.remove('active');
-  });
-}
-
 function showRegTab(){
-  activeTopTab='reg';
   hideAllTopSections();
+  setTopTabActive('reg');
   document.getElementById('secRegistry').style.display='block';
-  document.getElementById('iTabs').style.display='none';
-  document.getElementById('it-reg').classList.add('active');
   renderPublicRegistry();
 }
 function showPastTab(){
-  activeTopTab='past';
   hideAllTopSections();
+  setTopTabActive('past');
   document.getElementById('secPast').style.display='block';
-  document.getElementById('iTabs').style.display='none';
-  document.getElementById('it-past').classList.add('active');
   renderPastSeasons();
 }
 
 function showTreasuryTab(){
-  activeTopTab='treasury';
   hideAllTopSections();
+  setTopTabActive('treasury');
   document.getElementById('secTreasury').style.display='block';
-  document.getElementById('iTabs').style.display='none';
-  document.getElementById('it-treasury').classList.add('active');
   renderTreasury();
 }
 
@@ -1043,7 +1072,7 @@ function renderTreasury(){
   var el=document.getElementById('secTreasury');
   var awards=db.awards||[];
   if(!awards.length){
-    el.innerHTML='<div class="empty" style="margin-top:2rem"><div style="font-size:3rem">🏛️</div><div style="margin-top:.5rem;font-family:Anton,sans-serif;font-size:1rem;letter-spacing:2px;color:var(--gold)">Treasure Hall</div><div style="color:var(--muted);margin-top:.4rem;font-size:.8rem">No awards yet — the admin will add them after each tournament.</div></div>';
+    el.innerHTML='<div class="empty" style="margin-top:2rem"><div style="font-size:3rem">🏛️</div><div style="margin-top:.5rem;font-family:Anton,sans-serif;font-size:1rem;letter-spacing:2px;color:var(--gold)">Award Hall</div><div style="color:var(--muted);margin-top:.4rem;font-size:.8rem">No awards yet — the admin will add them after each tournament.</div></div>';
     return;
   }
   var typeLabels={'trophy_1st':'🏆 Champion Trophy','medal_1st':'🥇 Gold Medal','medal_2nd':'🥈 Silver Medal','medal_3rd':'🥉 Bronze Medal','golden_boot':'👟 Golden Boot','best_defense':'🛡️ Best Defense','custom':'🎖️ Custom'};
@@ -1138,16 +1167,20 @@ function showPastSec(tid,name,btn){
 }
 
 function showTourTab(){
-  activeTopTab='tourney';
   hideAllTopSections();
-  document.getElementById('tourContent').style.display='block';
-  document.getElementById('it-tourney').classList.add('active');
-  if(activeTid){
-    document.getElementById('iTabs').style.display='flex';
-    showSec('table');
-  } else {
-    document.getElementById('iTabs').style.display='none';
+  setTopTabActive('tourney');
+  var tours=(db.tournaments||[]).filter(function(t){return t.status!=='finished';});
+  if(!tours.length){
+    document.getElementById('tourContent').style.display='block';
     document.getElementById('secTable').innerHTML='<div class="empty"><div class="empty-icon">🏆</div>No tournaments yet</div>';
+    return;
+  }
+  if(tours.length===1){
+    openTour(tours[0].id);
+  } else if(activeTid && tours.some(function(t){return t.id===activeTid;})){
+    openTour(activeTid);
+  } else {
+    renderTourList();
   }
 }
 
@@ -1550,82 +1583,58 @@ function normalizeTour(t){
 
 function fetchFromFirebase(){
   syncStart();
+  var loadedAwards=[];
   // Load registry FIRST so logos are ready before the table renders
-  var _fbAwards=[], _fbMeta={};
   fbDb.ref('registry').once('value').then(function(regSnap){
     var regData=regSnap.val();
     registryTeams=regData?Object.values(regData):[];
-    // Now fetch tournaments — registry is already populated
+    return fbDb.ref('awards').once('value');
+  }).then(function(awardsSnap){
+    var awardsData=awardsSnap.val();
+    loadedAwards=awardsData?Object.values(awardsData):[];
     return fbDb.ref('tournaments').once('value');
   }).then(function(snap){
     var data=snap.val();
+    syncEnd();
     var tours=data?Object.values(data):[];
     tours.forEach(normalizeTour);
-    // Pull awards + site meta too, so Treasure Hall and predictions reflect what admin published
-    return Promise.all([
-      fbDb.ref('awards').once('value'),
-      fbDb.ref('meta').once('value')
-    ]).then(function(results){
-      _fbAwards=results[0].val()?Object.values(results[0].val()):[];
-      _fbMeta=results[1].val()||{};
-      return tours;
-    });
-  }).then(function(tours){
-    syncEnd();
-    db={tournaments:tours,awards:_fbAwards,showPredictions:!!_fbMeta.showPredictions};
+    db={tournaments:tours,awards:loadedAwards};
 
+    var liveTours=tours.filter(function(t){return t.status!=='finished';});
     var allFinished=tours.length>0&&tours.every(function(t){return t.status==='finished';});
-    // First load: activeTid is still null and user hasn't navigated anywhere
-    var isFirstLoad=!activeTid;
+    // Keep activeTid pointed at a valid live tournament if possible
+    if(!activeTid||!liveTours.some(function(t){return t.id===activeTid;})){
+      activeTid=liveTours.length?liveTours[0].id:null;
+    }
+    // First load: user hasn't navigated anywhere yet
+    var isFirstLoad=!fetchFromFirebase._hasLoadedOnce;
+    fetchFromFirebase._hasLoadedOnce=true;
 
     if(isFirstLoad){
-      renderTournamentTabs();
       if(allFinished){
         showPastTab();
-      } else if(activeTid){
-        activeTopTab='tourney';
-        document.getElementById('secRegistry').style.display='none';
-        document.getElementById('secPast').style.display='none';
-        document.getElementById('tourContent').style.display='block';
-        document.getElementById('it-reg').classList.remove('active');
-        document.getElementById('it-past').classList.remove('active');
-        document.getElementById('it-tourney').classList.add('active');
-        document.getElementById('iTabs').style.display='flex';
-        render(activeSection);
+      } else if(liveTours.length){
+        showTourTab();
       } else {
-        activeTopTab='reg';
-        document.getElementById('secRegistry').style.display='block';
-        document.getElementById('secPast').style.display='none';
-        document.getElementById('tourContent').style.display='none';
-        document.getElementById('it-reg').classList.add('active');
-        document.getElementById('it-past').classList.remove('active');
-        document.getElementById('it-tourney').classList.remove('active');
-        renderPublicRegistry();
+        showRegTab();
       }
     } else {
       // Silent background refresh — stay exactly where the user is
-      renderTournamentTabs();
       if(activeTopTab==='tourney'){
-        var stillExists=tours.find(function(t){return t.id===activeTid;});
-        if(!stillExists){
-          // Tournament was deleted — gracefully fall back to registry
-          activeTid=tours.length?tours[0].id:null;
-          activeTopTab='reg';
-          document.getElementById('secRegistry').style.display='block';
-          document.getElementById('secPast').style.display='none';
-          document.getElementById('tourContent').style.display='none';
-          document.getElementById('it-reg').classList.add('active');
-          document.getElementById('it-past').classList.remove('active');
-          document.getElementById('it-tourney').classList.remove('active');
-          renderPublicRegistry();
-        } else {
-          // Silently re-render current inner section — no tab change
+        var stillExists=liveTours.find(function(t){return t.id===activeTid;});
+        if(!stillExists && liveTours.length===0){
+          showRegTab();
+        } else if(document.getElementById('tourContent').style.display!=='none'){
+          // A specific tournament is open — silently re-render its current section
           render(activeSection);
         }
+        // else: user is on the multi-tournament list view — list refreshes next visit
       } else if(activeTopTab==='reg'){
         renderPublicRegistry();
       } else if(activeTopTab==='past'){
         renderPastSeasons();
+      } else if(activeTopTab==='treasury'){
+        renderTreasury();
       }
     }
 
@@ -1649,26 +1658,6 @@ function init(){
 function openTeamProfileWithHistory(opts){
   history.pushState({teamProfile:true},'');
   openTeamProfile(opts);
-}
-
-// ── Tournament tabs ────────────────────────────────────────────
-function renderTournamentTabs(){
-  var tabs=document.getElementById('tTabs');
-  var allTours=db.tournaments;
-  var tours=allTours.filter(function(t){return t.status!=='finished';});
-  if(!tours||!tours.length){
-    tabs.innerHTML='';
-    if(activeTid){var active=allTours.find(function(t){return t.id===activeTid;});if(!active||active.status==='finished')activeTid=null;}
-    return;
-  }
-  if(!activeTid){activeTid=tours[0].id;}
-  else{var cur=allTours.find(function(t){return t.id===activeTid;});if(!cur||cur.status==='finished')activeTid=tours[0].id;}
-  tabs.innerHTML=tours.map(function(t){
-    return '<button class="t-tab'+(activeTid===t.id?' active':'')+'" data-tid="'+t.id+'">'+t.name+'</button>';
-  }).join('');
-  tabs.querySelectorAll('.t-tab').forEach(function(btn){
-    btn.addEventListener('click',function(){openTour(btn.getAttribute('data-tid'));});
-  });
 }
 
 function render(name){
@@ -1831,9 +1820,9 @@ function renderTable(){
           var zone=qualified?'z-w':'z-e';
           var topBorder=(i===gThird&&i>0)?'border-top:2px dashed rgba(255,59,92,.25)':'';
           var regT=resolveRegTeam(t);
-          html+='<tr class="'+zone+'" style="'+topBorder+'">'+
+          html+='<tr class="'+zone+'" style="'+topBorder+';cursor:pointer" onclick="openTeamProfileWithHistory({type:\'tournament\',teamId:\''+t.id+'\',tourId:\''+tour.id+'\'})">'+
             '<td><span class="rank-num">'+(i+1)+(qualified?' ✓':' ✗')+'</span></td>'+
-            '<td><div class="tbl-team-tap" style="display:flex;align-items:center;gap:.5rem" onclick="openTeamProfile({type:\'tournament\',teamId:\''+t.id+'\',tourId:\''+tour.id+'\'})">'+logoImg(t.name,20,regT)+
+            '<td><div style="display:flex;align-items:center;gap:.5rem">'+logoImg(t.name,20,regT)+
             '<strong style="font-family:\'DM Sans\',sans-serif;font-weight:700">'+t.name+'</strong></div></td>'+
             '<td class="num" style="color:var(--muted);font-size:.72rem">'+t._fromGroup+'</td>'+
             '<td class="num">'+t.played+'</td>'+
@@ -1888,9 +1877,9 @@ function buildTable(tour,teams){
     var regT=resolveRegTeam(t);
     var medal=i===0?' 🥇':i===1?' 🥈':i===2?' 🥉':'';
     var rankBadge='<span class="rank-num">'+pos+medal+'</span>';
-    h+='<tr class="'+zone+' " style="'+topBorder+'">'+
+    h+='<tr class="'+zone+' " style="'+topBorder+';cursor:pointer" onclick="openTeamProfileWithHistory({type:\'tournament\',teamId:\''+t.id+'\',tourId:\''+tour.id+'\'})">'+
       '<td>'+rankBadge+'</td>'+
-      '<td><div class="tbl-team-tap" style="display:flex;align-items:center;gap:.5rem" onclick="openTeamProfile({type:\'tournament\',teamId:\''+t.id+'\',tourId:\''+tour.id+'\'})">'+logoImg(t.name,22,regT)+'<strong style="font-family:\'DM Sans\',sans-serif;font-weight:700">'+t.name+'</strong></div></td>'+
+      '<td><div style="display:flex;align-items:center;gap:.5rem">'+logoImg(t.name,22,regT)+'<strong style="font-family:\'DM Sans\',sans-serif;font-weight:700">'+t.name+'</strong></div></td>'+
       '<td class="num">'+t.played+'</td>'+
       '<td class="num" style="color:var(--green)">'+t.won+'</td>'+
       '<td class="num">'+t.drawn+'</td>'+

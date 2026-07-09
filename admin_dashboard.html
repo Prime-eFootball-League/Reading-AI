@@ -1001,26 +1001,6 @@ window._fbLoadAll = () => {
   return get(r).then(snap => snap.val());
 };
 
-// Awards: the whole awards array is saved/loaded as one node (small dataset, no per-item churn)
-window._fbSaveAwards = (awardsArr) => {
-  const r = ref(database, 'awards');
-  return set(r, awardsArr || []);
-};
-window._fbLoadAwards = () => {
-  const r = ref(database, 'awards');
-  return get(r).then(snap => snap.val());
-};
-
-// Site-wide meta flags (e.g. showPredictions) that aren't tied to one tournament
-window._fbSaveMeta = (metaObj) => {
-  const r = ref(database, 'meta');
-  return set(r, metaObj || {});
-};
-window._fbLoadMeta = () => {
-  const r = ref(database, 'meta');
-  return get(r).then(snap => snap.val());
-};
-
 // Registry: save/load/delete a single team
 window._fbSaveRegTeam = (tid, teamData) => {
   const r = ref(database, 'registry/' + tid);
@@ -3071,10 +3051,6 @@ function togglePredictions(){
   // Global flag — applies to ALL tournaments on the public page
   db.showPredictions=!db.showPredictions;
   sdb();
-  if(window._fbSaveMeta){
-    setSyncStatus('saving');
-    window._fbSaveMeta({showPredictions:db.showPredictions}).then(()=>setSyncStatus('saved')).catch(()=>setSyncStatus('error'));
-  }
   updatePredictionBtn();
   toast(db.showPredictions?'⚡ Match predictions visible on public page for ALL tournaments!':'Predictions hidden from public page');
 }
@@ -3748,10 +3724,6 @@ function saveAward(){
   };
   db.awards.push(award);
   sdb();
-  if(window._fbSaveAwards){
-    setSyncStatus('saving');
-    window._fbSaveAwards(db.awards).then(()=>setSyncStatus('saved')).catch(()=>setSyncStatus('error'));
-  }
   renderAwardsList();
   // Clear form
   document.getElementById('awardName').value='';
@@ -3770,10 +3742,6 @@ function saveAward(){
 function deleteAward(id){
   db.awards=(db.awards||[]).filter(function(a){return a.id!==id;});
   sdb();
-  if(window._fbSaveAwards){
-    setSyncStatus('saving');
-    window._fbSaveAwards(db.awards).then(()=>setSyncStatus('saved')).catch(()=>setSyncStatus('error'));
-  }
   renderAwardsList();
   toast('Award deleted');
 }
@@ -4685,26 +4653,6 @@ function initFirebaseSync(){
       if(activeTid) updateAll();
     }
     if(typeof updateAiBadge==='function') updateAiBadge();
-    // Pull awards + meta too, so they survive even if this device's localStorage is cleared
-    var pAwards = window._fbLoadAwards ? window._fbLoadAwards() : Promise.resolve(null);
-    var pMeta = window._fbLoadMeta ? window._fbLoadMeta() : Promise.resolve(null);
-    Promise.all([pAwards, pMeta]).then(function(results){
-      var cloudAwards = results[0], cloudMeta = results[1];
-      var localChanged = false;
-      if(cloudAwards && cloudAwards.length && !(db.awards && db.awards.length)){
-        db.awards = cloudAwards;
-        localChanged = true;
-      }
-      if(cloudMeta && typeof cloudMeta.showPredictions === 'boolean' && db.showPredictions === undefined){
-        db.showPredictions = cloudMeta.showPredictions;
-        localChanged = true;
-      }
-      if(localChanged){
-        localStorage.setItem('efh_db', JSON.stringify(db));
-        if(typeof renderAwardsList==='function') renderAwardsList();
-        if(typeof updatePredictionBtn==='function') updatePredictionBtn();
-      }
-    }).catch(function(){});
     setSyncStatus('idle');
   }).catch(function(){ setSyncStatus('error'); });
 }
