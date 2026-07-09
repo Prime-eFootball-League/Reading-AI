@@ -3306,7 +3306,7 @@ function openTeamProfile(opts){
     // tournament team
     var tour=db.tournaments.find(function(t){return t.id===opts.tourId;});
     if(!tour)return;
-    var t=tour.teams.find(function(x){return x.id===opts.teamId;});
+    var t=tour.teams.find(function(x){return String(x.id)===String(opts.teamId);});
     if(!t)return;
     var regTeam2=resolveRegTeam(t);
     var logoUrl2=logoImg(t.name,70,regTeam2);
@@ -4046,8 +4046,8 @@ function openMatchPreview(homeId, awayId, matchId, tourId){
   if(!tour) return;
 
   // Find teams
-  var homeTeam = (tour.teams||[]).find(function(t){return t.id===homeId;});
-  var awayTeam = (tour.teams||[]).find(function(t){return t.id===awayId;});
+  var homeTeam = (tour.teams||[]).find(function(t){return String(t.id)===String(homeId);});
+  var awayTeam = (tour.teams||[]).find(function(t){return String(t.id)===String(awayId);});
   if(!homeTeam||!awayTeam) return;
 
   var homeName = homeTeam.name, awayName = awayTeam.name;

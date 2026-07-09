@@ -883,6 +883,18 @@ td.pts{font-family:'Anton',sans-serif;font-size:1.1rem;color:var(--gold);text-sh
   </div>
 </div>
 
+<!-- REGISTRY TEAM DETAIL PANEL -->
+<div id="regTeamDetailOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:520;align-items:flex-end;justify-content:center;backdrop-filter:blur(3px)" onclick="if(event.target===this)closeRegTeamDetail()">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:18px 18px 0 0;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:1.2rem 1.2rem 2rem">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem">
+      <div class="card-title" style="margin-bottom:0">👤 Team Details</div>
+      <button onclick="closeRegTeamDetail()" style="background:none;border:none;color:var(--muted);font-size:1.3rem;cursor:pointer;padding:.2rem">✕</button>
+    </div>
+    <div style="width:40px;height:4px;background:var(--border);border-radius:4px;margin:-0.3rem auto 1rem"></div>
+    <div id="regTeamDetailBody"></div>
+  </div>
+</div>
+
 <!-- RENAME TOURNAMENT MODAL -->
 <div class="overlay" id="renameTourOverlay">
   <div class="modal gold-border">
@@ -1012,6 +1024,20 @@ window._fbDeleteRegTeam = (tid) => {
 };
 window._fbLoadRegistry = () => {
   const r = ref(database, 'registry');
+  return get(r).then(snap => snap.val());
+};
+
+// Awards: save/load/delete a single award (mirrors registry pattern)
+window._fbSaveAward = (aid, awardData) => {
+  const r = ref(database, 'awards/' + aid);
+  return set(r, awardData);
+};
+window._fbDeleteAward = (aid) => {
+  const r = ref(database, 'awards/' + aid);
+  return set(r, null);
+};
+window._fbLoadAwards = () => {
+  const r = ref(database, 'awards');
   return get(r).then(snap => snap.val());
 };
 
@@ -1282,7 +1308,7 @@ function wizAddTeam(){
   if(!n){toast('Enter team name',true);return;}
   if(wizData.teams.some(t=>t.name.toLowerCase()===n.toLowerCase())){toast(`${n} is already added`,true);return;}
   const g=wizData.format==='groups'?document.getElementById('wizGroup').value:'';
-  wizData.teams.push({id:Date.now()+Math.random(),name:n,coach:c,group:g,played:0,won:0,drawn:0,lost:0,goalsFor:0,goalsAgainst:0,points:0});
+  wizData.teams.push({id:'team_'+Date.now()+'_'+Math.floor(Math.random()*1e6),name:n,coach:c,group:g,played:0,won:0,drawn:0,lost:0,goalsFor:0,goalsAgainst:0,points:0});
   document.getElementById('wizTeamName').value='';
   document.getElementById('wizCoach').value='';
   renderWizTeams();
@@ -1298,7 +1324,7 @@ function buildWizRegistryDropdown(){
   const prevVal=sel.value;
   sel.innerHTML='<option value="">-- Select a registered team --</option>'+
     available.map(t=>`<option value="${t.id}">${t.name}${t.coach?' ('+t.coach+')':''}</option>`).join('');
-  if(available.some(t=>t.id===prevVal)) sel.value=prevVal;
+  if(available.some(t=>String(t.id)===String(prevVal))) sel.value=prevVal;
 }
 function wizAddFromRegistry(){
   const sel=document.getElementById('wizRegistrySelect');
@@ -1310,7 +1336,7 @@ function wizAddFromRegistry(){
     toast(`${regTeam.name} is already added`,true);return;
   }
   const g=wizData.format==='groups'?document.getElementById('wizGroup').value:'';
-  wizData.teams.push({id:Date.now()+Math.random(),registryId:regTeam.id,name:regTeam.name,coach:regTeam.coach||'',group:g,played:0,won:0,drawn:0,lost:0,goalsFor:0,goalsAgainst:0,points:0});
+  wizData.teams.push({id:'team_'+Date.now()+'_'+Math.floor(Math.random()*1e6),registryId:regTeam.id,name:regTeam.name,coach:regTeam.coach||'',group:g,played:0,won:0,drawn:0,lost:0,goalsFor:0,goalsAgainst:0,points:0});
   renderWizTeams();
   toast(`${regTeam.name} added`);
 }
@@ -1320,9 +1346,9 @@ function wizImportAllRegistry(){
   const existing=(wizData.teams||[]).map(t=>t.name.toLowerCase());
   const toAdd=registryTeams.filter(t=>!existing.includes(t.name.toLowerCase()));
   if(!toAdd.length){toast('All registry teams are already in the list',true);return;}
-  toAdd.forEach(t=>{
+  toAdd.forEach((t,idx)=>{
     wizData.teams.push({
-      id:Date.now()+Math.random(),
+      id:'team_'+Date.now()+'_'+idx+'_'+Math.floor(Math.random()*1e6),
       registryId:t.id,
       name:t.name,
       coach:t.coach||'',
@@ -1705,8 +1731,8 @@ function addMatch(){
   const date=document.getElementById('schDate').value;
   if(!hId||!aId){toast('Select both teams',true);return;}
   if(hId===aId){toast('Different teams!',true);return;}
-  const h=tour.teams.find(t=>t.id===hId);
-  const a=tour.teams.find(t=>t.id===aId);
+  const h=tour.teams.find(t=>String(t.id)===String(hId));
+  const a=tour.teams.find(t=>String(t.id)===String(aId));
   tour.matches.push({id:'m_'+Date.now(),homeId:hId,awayId:aId,homeName:h.name,awayName:a.name,round,date:date||'',homeScore:null,awayScore:null,done:false});
   document.getElementById('schRound').value='';
   sdb();renderFixtureList();updateAll();toast(`${h.name} vs ${a.name} scheduled!`);
@@ -1951,17 +1977,97 @@ function renderFixtureList(){
 function getRegTeam(t){
   if(!t) return null;
   if(t.registryId){
-    const byId = registryTeams.find(r => r.id === t.registryId);
+    const byId = registryTeams.find(r => String(r.id) === String(t.registryId));
     if(byId) return byId;
   }
   return registryTeams.find(r => r.name && t.name && r.name.trim().toLowerCase() === t.name.trim().toLowerCase());
+}
+
+// Reverse direction: given a registry team, find the matching in-tournament
+// team object for a specific tournament. Same two-way match as getRegTeam —
+// registryId first, falling back to case-insensitive name — so it finds a
+// team regardless of which flow originally added it to that tournament.
+function findTourTeamForReg(tour, regTeam){
+  if(!tour||!regTeam) return null;
+  const byId = (tour.teams||[]).find(function(tm){return tm.registryId && String(tm.registryId)===String(regTeam.id);});
+  if(byId) return byId;
+  return (tour.teams||[]).find(function(tm){return tm.name && regTeam.name && tm.name.trim().toLowerCase()===regTeam.name.trim().toLowerCase();});
+}
+
+// Flatten every bracket-stage match (across all rounds, including the 3rd-place
+// match) for a tournament into a single array, tagging each with its round name.
+function flattenBracketMatches(tour){
+  if(!tour||!tour.bracketRounds) return [];
+  const out=[];
+  tour.bracketRounds.forEach(function(round){
+    (round.matches||[]).forEach(function(m){
+      out.push(Object.assign({},m,{roundName:round.name}));
+    });
+  });
+  return out;
+}
+
+// Build the complete cross-tournament history for a registry team: every
+// tournament they've appeared in (regardless of whether they were added via
+// the wizard, "Import from Registry", or added mid-tournament), their record
+// in each, and every match — played and upcoming — across group/league/swiss
+// fixtures AND knockout bracket rounds.
+function getRegTeamHistory(regTeam){
+  const appearances=[];
+  const played=[];
+  const upcoming=[];
+  (db.tournaments||[]).forEach(function(tour){
+    const tm=findTourTeamForReg(tour,regTeam);
+    if(!tm) return;
+    appearances.push({tour:tour,tourTeam:tm});
+
+    // Regular (group/league/swiss) fixtures
+    (tour.matches||[]).forEach(function(m){
+      const isHome=String(m.homeId)===String(tm.id);
+      const isAway=String(m.awayId)===String(tm.id);
+      if(!isHome&&!isAway) return;
+      const entry={
+        tourName:tour.name,tourId:tour.id,round:m.round||'',
+        oppName:isHome?(m.awayName||'?'):(m.homeName||'?'),
+        gf:isHome?m.homeScore:m.awayScore,
+        ga:isHome?m.awayScore:m.homeScore,
+        done:!!m.done,sortKey:tour.created||0
+      };
+      if(entry.done){
+        entry.result=entry.gf>entry.ga?'W':entry.gf<entry.ga?'L':'D';
+        played.push(entry);
+      } else upcoming.push(entry);
+    });
+
+    // Knockout bracket matches
+    flattenBracketMatches(tour).forEach(function(m){
+      const isT1=m.t1&&String(m.t1.id)===String(tm.id);
+      const isT2=m.t2&&String(m.t2.id)===String(tm.id);
+      if(!isT1&&!isT2) return;
+      const opp=isT1?m.t2:m.t1;
+      const entry={
+        tourName:tour.name,tourId:tour.id,round:m.roundName||'',
+        oppName:opp?opp.name:(m.t1||m.t2?'TBD':'TBD'),
+        gf:isT1?m.leg1h:m.leg1a,
+        ga:isT1?m.leg1a:m.leg1h,
+        done:!!m.done,sortKey:tour.created||0
+      };
+      if(entry.done&&m.winner){
+        entry.result=String(m.winner.id)===String(tm.id)?'W':'L';
+        played.push(entry);
+      } else if(!entry.done&&opp) upcoming.push(entry);
+    });
+  });
+  played.sort(function(a,b){return b.sortKey-a.sortKey;});
+  upcoming.sort(function(a,b){return b.sortKey-a.sortKey;});
+  return {appearances:appearances,played:played,upcoming:upcoming};
 }
 
 // ═══════════════════════════════════════════
 function getTeamCoach(teamName, teamId){
   const tour = getTour();
   if(!tour) return '';
-  let t = teamId ? tour.teams.find(x => x.id === teamId) : null;
+  let t = teamId ? tour.teams.find(x => String(x.id) === String(teamId)) : null;
   if(!t) t = tour.teams.find(x => x.name && x.name.trim().toLowerCase() === (teamName||'').trim().toLowerCase());
   return t && t.coach ? '🧢 ' + t.coach : '';
 }
@@ -1972,7 +2078,7 @@ function resolveMatchName(m, side){
   const id = side === 'home' ? m.homeId : m.awayId;
   const fallback = side === 'home' ? m.homeName : m.awayName;
   if(tour && id){
-    const t = (tour.teams||[]).find(t => t.id === id);
+    const t = (tour.teams||[]).find(t => String(t.id) === String(id));
     if(t) return t.name;
   }
   return fallback || '';
@@ -1981,7 +2087,7 @@ function resolveMatchName(m, side){
 function getTeamCoachById(id){
   const tour = getTour();
   if(!tour||!id) return '';
-  const t = (tour.teams||[]).find(x => x.id === id);
+  const t = (tour.teams||[]).find(x => String(x.id) === String(id));
   return t && t.coach ? '🧢 ' + t.coach : '';
 }
 
@@ -2261,8 +2367,8 @@ function saveScore(){
   const tour=getTour();if(!tour||!smFid)return;
   const m=tour.matches.find(x=>x.id===smFid);if(!m)return;
   // Primary lookup by ID; fall back to name match for fixtures with stale/deleted team IDs
-  let h=tour.teams.find(t=>t.id===m.homeId);
-  let a=tour.teams.find(t=>t.id===m.awayId);
+  let h=tour.teams.find(t=>String(t.id)===String(m.homeId));
+  let a=tour.teams.find(t=>String(t.id)===String(m.awayId));
   if(!h&&m.homeName)h=tour.teams.find(t=>t.name===m.homeName);
   if(!a&&m.awayName)a=tour.teams.find(t=>t.name===m.awayName);
   // If found by name, repair the stale IDs so future lookups work correctly
@@ -2292,8 +2398,8 @@ function applyStats(h,a,hs,as){
 }
 function reverseStats(m){
   const tour=getTour();
-  let h=tour.teams.find(t=>t.id===m.homeId);
-  let a=tour.teams.find(t=>t.id===m.awayId);
+  let h=tour.teams.find(t=>String(t.id)===String(m.homeId));
+  let a=tour.teams.find(t=>String(t.id)===String(m.awayId));
   if(!h&&m.homeName)h=tour.teams.find(t=>t.name===m.homeName);
   if(!a&&m.awayName)a=tour.teams.find(t=>t.name===m.awayName);
   if(h&&m.homeId!==h.id){m.homeId=h.id;}
@@ -2310,8 +2416,8 @@ function recalcAll(){
   const tour=getTour();if(!tour)return;
   tour.teams.forEach(t=>{t.played=t.won=t.drawn=t.lost=t.goalsFor=t.goalsAgainst=t.points=0;});
   tour.matches.filter(m=>m.done).forEach(m=>{
-    const h=tour.teams.find(t=>t.id===m.homeId);
-    const a=tour.teams.find(t=>t.id===m.awayId);
+    const h=tour.teams.find(t=>String(t.id)===String(m.homeId));
+    const a=tour.teams.find(t=>String(t.id)===String(m.awayId));
     if(h&&a)applyStats(h,a,m.homeScore,m.awayScore);
   });
 }
@@ -3724,6 +3830,12 @@ function saveAward(){
   };
   db.awards.push(award);
   sdb();
+  if(window._fbSaveAward){
+    setSyncStatus('saving');
+    window._fbSaveAward(award.id, award)
+      .then(()=>setSyncStatus('saved'))
+      .catch(()=>{setSyncStatus('error');toast('Award saved locally but failed to sync — check your connection',true);});
+  }
   renderAwardsList();
   // Clear form
   document.getElementById('awardName').value='';
@@ -3742,6 +3854,9 @@ function saveAward(){
 function deleteAward(id){
   db.awards=(db.awards||[]).filter(function(a){return a.id!==id;});
   sdb();
+  if(window._fbDeleteAward){
+    window._fbDeleteAward(id).catch(()=>toast('Deleted locally but failed to sync deletion',true));
+  }
   renderAwardsList();
   toast('Award deleted');
 }
@@ -3873,15 +3988,15 @@ function saveEditFix(){
   const round=document.getElementById('editFixRound').value.trim();
   if(!hId||!aId){toast('Select both teams',true);return;}
   if(hId===aId){toast('Different teams!',true);return;}
-  const h=tour.teams.find(t=>t.id===hId);
-  const a=tour.teams.find(t=>t.id===aId);
+  const h=tour.teams.find(t=>String(t.id)===String(hId));
+  const a=tour.teams.find(t=>String(t.id)===String(aId));
   // If result already saved and teams changed, reverse old stats then reapply
   if(m.done&&(m.homeId!==hId||m.awayId!==aId)){
     reverseStats(m);
     m.homeId=hId;m.awayId=aId;m.homeName=h.name;m.awayName=a.name;
     if(round)m.round=round;
-    const newH=tour.teams.find(t=>t.id===hId);
-    const newA=tour.teams.find(t=>t.id===aId);
+    const newH=tour.teams.find(t=>String(t.id)===String(hId));
+    const newA=tour.teams.find(t=>String(t.id)===String(aId));
     if(newH&&newA)applyStats(newH,newA,m.homeScore,m.awayScore);
   } else {
     m.homeId=hId;m.awayId=aId;m.homeName=h.name;m.awayName=a.name;
@@ -3906,8 +4021,8 @@ function mergeTeams(){
   const keepId=document.getElementById('mergeKeep').value;
   if(!oldId||!keepId){toast('Select both teams',true);return;}
   if(oldId===keepId){toast('Select different teams!',true);return;}
-  const oldTeam=tour.teams.find(t=>t.id===oldId);
-  const keepTeam=tour.teams.find(t=>t.id===keepId);
+  const oldTeam=tour.teams.find(t=>String(t.id)===String(oldId));
+  const keepTeam=tour.teams.find(t=>String(t.id)===String(keepId));
   showConfirm(`Merge "${oldTeam.name}" INTO "${keepTeam.name}"?\n\nAll fixtures with the old team will be re-assigned to ${keepTeam.name}. This cannot be undone.`,{title:'MERGE TEAMS?',icon:'🔀',confirmLabel:'MERGE',danger:true}).then(function(){
   // Reassign all matches referencing oldId → keepId
   tour.matches.forEach(m=>{
@@ -4583,7 +4698,7 @@ function renderRegistry(){
     const logoStatus = t.logoFilename
       ? `🖼 ${t.logoFilename}`
       : (t.logoUrl ? '🔗 Custom URL' : '🔍 Auto logo');
-    return `<div class="t-card" style="cursor:default">
+    return `<div class="t-card" style="cursor:pointer" onclick="openRegTeamDetail('${t.id}')">
       <div style="display:flex;align-items:center;gap:.8rem;flex:1;min-width:0">
         <div style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${logoHtml}</div>
         <div style="min-width:0">
@@ -4592,11 +4707,96 @@ function renderRegistry(){
         </div>
       </div>
       <div style="display:flex;gap:.5rem;flex-shrink:0">
-        <button class="del-btn" style="border-color:var(--gold);color:var(--gold)" onclick="editRegistryTeam('${t.id}')">✏️</button>
-        <button class="del-btn" onclick="deleteRegistryTeam('${t.id}')">🗑</button>
+        <button class="del-btn" style="border-color:var(--gold);color:var(--gold)" onclick="event.stopPropagation();editRegistryTeam('${t.id}')">✏️</button>
+        <button class="del-btn" onclick="event.stopPropagation();deleteRegistryTeam('${t.id}')">🗑</button>
       </div>
     </div>`;
   }).join('');
+}
+
+function openRegTeamDetail(tid){
+  const t = registryTeams.find(x => x.id === tid);
+  if(!t) return;
+  const hist = getRegTeamHistory(t);
+  const src = t.logoFilename ? GITHUB_LOGOS_BASE + t.logoFilename : (t.logoUrl || null);
+  const logoHtml = src
+    ? `<img src="${src}" style="width:56px;height:56px;object-fit:contain;border-radius:8px" onerror="this.style.opacity='.2'">`
+    : `<div style="width:56px;height:56px;display:flex;align-items:center;justify-content:center;font-size:2rem">⚽</div>`;
+
+  let h = `<div style="display:flex;align-items:center;gap:.9rem;margin-bottom:1rem">
+    ${logoHtml}
+    <div style="min-width:0">
+      <div style="font-family:'Anton',sans-serif;font-size:1.15rem;color:var(--gold);letter-spacing:1px">${t.name}</div>
+      <div style="font-size:.75rem;color:var(--muted)">${t.coach ? '🧢 '+t.coach : 'No coach set'}</div>
+    </div>
+  </div>`;
+
+  h += `<div style="display:flex;gap:.5rem;margin-bottom:1.1rem">
+    <button class="btn-full btn-gold" style="flex:1" onclick="closeRegTeamDetail();editRegistryTeam('${t.id}')">✏️ Edit</button>
+    <button class="btn-full btn-red" style="flex:1" onclick="closeRegTeamDetail();deleteRegistryTeam('${t.id}')">🗑 Delete</button>
+  </div>`;
+
+  // Tournaments section
+  h += `<div style="font-family:'Oswald',sans-serif;font-size:.72rem;letter-spacing:2px;color:var(--gold);margin-bottom:.5rem;border-bottom:1px solid var(--border);padding-bottom:.3rem">🏆 TOURNAMENTS (${hist.appearances.length})</div>`;
+  if(!hist.appearances.length){
+    h += `<div style="font-size:.78rem;color:var(--muted);margin-bottom:1rem">Not registered in any tournament yet.</div>`;
+  } else {
+    h += `<div style="margin-bottom:1.1rem">` + hist.appearances.map(function(ap){
+      const tm=ap.tourTeam, tour=ap.tour;
+      const statusBadge = tour.status==='finished'
+        ? '<span style="color:var(--muted)">🏁 Finished</span>'
+        : '<span style="color:var(--green)">🟢 Active</span>';
+      const fmtLabel = tour.format==='league'?'League':tour.format==='swiss'?'Swiss':'Groups'+(tm.group?' · Group '+tm.group:'');
+      return `<div style="padding:.55rem .7rem;background:var(--card2);border:1px solid var(--border);border-radius:8px;margin-bottom:.4rem;font-size:.76rem">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.25rem">
+          <strong style="color:var(--text)">${tour.name}</strong>${statusBadge}
+        </div>
+        <div style="color:var(--muted);font-size:.7rem;margin-bottom:.3rem">${tour.season||''} · ${fmtLabel}</div>
+        <div style="display:flex;gap:.7rem;font-size:.7rem;color:var(--muted)">
+          <span>P <strong style="color:var(--text)">${tm.played}</strong></span>
+          <span style="color:var(--green)">W ${tm.won}</span>
+          <span>D ${tm.drawn}</span>
+          <span style="color:var(--red)">L ${tm.lost}</span>
+          <span>Pts <strong style="color:var(--gold)">${tm.points}</strong></span>
+        </div>
+      </div>`;
+    }).join('') + `</div>`;
+  }
+
+  // Upcoming matches
+  h += `<div style="font-family:'Oswald',sans-serif;font-size:.72rem;letter-spacing:2px;color:var(--gold);margin-bottom:.5rem;border-bottom:1px solid var(--border);padding-bottom:.3rem">📅 UPCOMING MATCHES (${hist.upcoming.length})</div>`;
+  if(!hist.upcoming.length){
+    h += `<div style="font-size:.78rem;color:var(--muted);margin-bottom:1rem">No scheduled matches yet.</div>`;
+  } else {
+    h += `<div style="margin-bottom:1.1rem">` + hist.upcoming.slice(0,15).map(function(m){
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:.45rem .6rem;background:var(--card2);border:1px solid var(--border);border-radius:7px;margin-bottom:.3rem;font-size:.75rem">
+        <div><strong>vs ${m.oppName}</strong><div style="color:var(--muted);font-size:.65rem">${m.tourName}${m.round?' · '+m.round:''}</div></div>
+      </div>`;
+    }).join('') + `</div>`;
+  }
+
+  // Matches played
+  h += `<div style="font-family:'Oswald',sans-serif;font-size:.72rem;letter-spacing:2px;color:var(--gold);margin-bottom:.5rem;border-bottom:1px solid var(--border);padding-bottom:.3rem">✅ MATCHES PLAYED (${hist.played.length})</div>`;
+  if(!hist.played.length){
+    h += `<div style="font-size:.78rem;color:var(--muted)">No matches played yet.</div>`;
+  } else {
+    h += hist.played.slice(0,30).map(function(m){
+      const col = m.result==='W'?'var(--green)':m.result==='L'?'var(--red)':'var(--muted)';
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:.45rem .6rem;background:var(--card2);border:1px solid var(--border);border-radius:7px;margin-bottom:.3rem;font-size:.75rem">
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <span style="width:20px;height:20px;border-radius:50%;background:${col};color:#0a0d16;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;flex-shrink:0">${m.result}</span>
+          <div><strong>vs ${m.oppName}</strong><div style="color:var(--muted);font-size:.65rem">${m.tourName}${m.round?' · '+m.round:''}</div></div>
+        </div>
+        <strong>${m.gf!=null?m.gf:'–'} - ${m.ga!=null?m.ga:'–'}</strong>
+      </div>`;
+    }).join('');
+  }
+
+  document.getElementById('regTeamDetailBody').innerHTML = h;
+  document.getElementById('regTeamDetailOverlay').style.display='flex';
+}
+function closeRegTeamDetail(){
+  document.getElementById('regTeamDetailOverlay').style.display='none';
 }
 
 // ── INIT ──
@@ -4630,27 +4830,36 @@ function initFirebaseSync(){
     // Now fetch tournaments — registry is already up to date
     return window._fbLoadAll();
   }).then(function(cloudTours){
-    if(!cloudTours){ setSyncStatus('idle'); return; }
-    var changed = false;
-    Object.values(cloudTours).forEach(function(cloudTour){
-      var idx = db.tournaments.findIndex(function(t){ return t.id === cloudTour.id; });
-      if(idx === -1){
-        db.tournaments.push(normalizeTour(cloudTour));
-        changed = true;
-      } else {
-        var localTour = db.tournaments[idx];
-        var cloudTime = cloudTour.updatedAt || 0;
-        var localTime = localTour.updatedAt || 0;
-        if(cloudTime > localTime){
-          db.tournaments[idx] = normalizeTour(cloudTour);
+    if(cloudTours){
+      var changed = false;
+      Object.values(cloudTours).forEach(function(cloudTour){
+        var idx = db.tournaments.findIndex(function(t){ return t.id === cloudTour.id; });
+        if(idx === -1){
+          db.tournaments.push(normalizeTour(cloudTour));
           changed = true;
+        } else {
+          var localTour = db.tournaments[idx];
+          var cloudTime = cloudTour.updatedAt || 0;
+          var localTime = localTour.updatedAt || 0;
+          if(cloudTime > localTime){
+            db.tournaments[idx] = normalizeTour(cloudTour);
+            changed = true;
+          }
         }
+      });
+      if(changed){
+        localStorage.setItem('efh_db', JSON.stringify(db));
+        renderList();
+        if(activeTid) updateAll();
       }
-    });
-    if(changed){
+    }
+    // Finally, load awards (separate Firebase path — admin's own copy may be stale/local-only)
+    return window._fbLoadAwards ? window._fbLoadAwards() : null;
+  }).then(function(cloudAwards){
+    if(cloudAwards){
+      db.awards = Object.values(cloudAwards);
       localStorage.setItem('efh_db', JSON.stringify(db));
-      renderList();
-      if(activeTid) updateAll();
+      if(typeof renderAwardsList==='function') renderAwardsList();
     }
     if(typeof updateAiBadge==='function') updateAiBadge();
     setSyncStatus('idle');
