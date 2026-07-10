@@ -1068,6 +1068,9 @@ function showTreasuryTab(){
   renderTreasury();
 }
 
+var AWARD_TYPE_LABELS_PUB={'trophy_1st':'🏆 Champion Trophy','medal_1st':'🥇 Gold Medal','medal_2nd':'🥈 Silver Medal','medal_3rd':'🥉 Bronze Medal','golden_boot':'👟 Golden Boot','best_defense':'🛡️ Best Defense','custom':'🎖️ Custom'};
+var AWARD_TYPE_COLORS_PUB={'trophy_1st':'#c9a84c','medal_1st':'#ffd700','medal_2nd':'#c0c0c0','medal_3rd':'#cd7f32','golden_boot':'#ff6b35','best_defense':'#4db8ff','custom':'#c9a84c'};
+
 function renderTreasury(){
   var el=document.getElementById('secTreasury');
   var awards=db.awards||[];
@@ -1075,8 +1078,8 @@ function renderTreasury(){
     el.innerHTML='<div class="empty" style="margin-top:2rem"><div style="font-size:3rem">🏛️</div><div style="margin-top:.5rem;font-family:Anton,sans-serif;font-size:1rem;letter-spacing:2px;color:var(--gold)">Award Hall</div><div style="color:var(--muted);margin-top:.4rem;font-size:.8rem">No awards yet — the admin will add them after each tournament.</div></div>';
     return;
   }
-  var typeLabels={'trophy_1st':'🏆 Champion Trophy','medal_1st':'🥇 Gold Medal','medal_2nd':'🥈 Silver Medal','medal_3rd':'🥉 Bronze Medal','golden_boot':'👟 Golden Boot','best_defense':'🛡️ Best Defense','custom':'🎖️ Custom'};
-  var typeColors={'trophy_1st':'#c9a84c','medal_1st':'#ffd700','medal_2nd':'#c0c0c0','medal_3rd':'#cd7f32','golden_boot':'#ff6b35','best_defense':'#4db8ff','custom':'#c9a84c'};
+  var typeLabels=AWARD_TYPE_LABELS_PUB;
+  var typeColors=AWARD_TYPE_COLORS_PUB;
 
   // Group by type for sections
   var sections={'trophy_1st':[],'medal_1st':[],'medal_2nd':[],'medal_3rd':[],'golden_boot':[],'best_defense':[],'custom':[]};
@@ -1091,9 +1094,9 @@ function renderTreasury(){
     h+='<div style="margin-bottom:1.4rem"><div style="font-family:Anton,sans-serif;font-size:.7rem;letter-spacing:3px;color:'+col+';text-transform:uppercase;margin-bottom:.6rem;padding-bottom:.4rem;border-bottom:1px solid rgba(201,168,76,.15)">'+( typeLabels[type]||type)+'</div>';
     h+='<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem">';
     items.forEach(function(a){
-      h+='<div style="background:rgba(255,255,255,.03);border:1px solid rgba(201,168,76,.15);border-radius:12px;padding:.8rem;text-align:center;position:relative;overflow:hidden">'+
+      h+='<div style="background:rgba(255,255,255,.03);border:1px solid rgba(201,168,76,.15);border-radius:12px;padding:.8rem;text-align:center;position:relative;overflow:hidden;cursor:pointer" onclick="openAwardShowcase(\''+a.id+'\')">'+
         '<div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,'+col+',transparent)"></div>'+
-        (a.img?'<img src="'+a.img+'" style="width:64px;height:64px;object-fit:contain;border-radius:8px;margin-bottom:.5rem">':'<div style="font-size:2.5rem;margin-bottom:.4rem">'+(typeLabels[type]||'🏅').split(' ')[0]+'</div>')+
+        (a.img?'<img src="'+a.img+'" style="width:84px;height:84px;object-fit:contain;border-radius:8px;margin-bottom:.5rem">':'<div style="font-size:2.8rem;margin-bottom:.4rem">'+(typeLabels[type]||'🏅').split(' ')[0]+'</div>')+
         '<div style="font-family:Anton,sans-serif;font-size:.82rem;color:'+col+';letter-spacing:.5px;line-height:1.2;margin-bottom:.3rem">'+a.recipient+'</div>'+
         '<div style="font-size:.6rem;color:var(--muted)">'+a.name+'</div>'+
         (a.season?'<div style="font-size:.55rem;color:rgba(201,168,76,.5);margin-top:.2rem">'+a.season+(a.year?' · '+a.year:'')+'</div>':'')+
@@ -1102,6 +1105,68 @@ function renderTreasury(){
     h+='</div></div>';
   });
   el.innerHTML=h;
+}
+
+// Find the recipient's actual record in the linked tournament, matched by name
+// (awards only store the recipient's name, not a team id).
+function findAwardTeam(tour,recipientName){
+  if(!tour||!recipientName) return null;
+  return (tour.teams||[]).find(function(x){return x.name&&x.name.trim().toLowerCase()===recipientName.trim().toLowerCase();})||null;
+}
+
+// Build a short, factual "how they won it" line from real tournament data —
+// never a guess or generic filler.
+function getAwardBlurb(a){
+  var tour=a.tournamentId?db.tournaments.find(function(t){return t.id===a.tournamentId;}):null;
+  if(!tour) return '';
+  if(a.type==='trophy_1st'){
+    if(tour.bracketRounds&&tour.bracketRounds.length){
+      var frs=tour.bracketRounds.filter(function(r){return r.matches&&r.matches[0]&&!r.matches[0].is3rd;});
+      var fr=frs[frs.length-1];
+      var m=fr&&fr.matches[0];
+      if(m&&m.winner&&m.loser){
+        var t1IsWinner=m.t1&&String(m.t1.id)===String(m.winner.id);
+        var wScore=t1IsWinner?m.leg1h:m.leg1a;
+        var lScore=t1IsWinner?m.leg1a:m.leg1h;
+        if(wScore!=null&&lScore!=null) return 'Won the Final '+wScore+'–'+lScore+' vs '+m.loser.name;
+      }
+    }
+    return 'Crowned champions of '+tour.name;
+  }
+  if(a.type==='golden_boot'||a.type==='best_defense'){
+    var tm=findAwardTeam(tour,a.recipient);
+    if(tm){
+      return a.type==='golden_boot'
+        ? tm.goalsFor+' goals scored in '+tm.played+' matches'
+        : 'Only '+tm.goalsAgainst+' goals conceded in '+tm.played+' matches';
+    }
+  }
+  if(a.type==='medal_1st'||a.type==='medal_2nd'||a.type==='medal_3rd'){
+    var tm2=findAwardTeam(tour,a.recipient);
+    if(tm2) return tm2.played+' matches played · '+tm2.won+'W '+tm2.drawn+'D '+tm2.lost+'L';
+  }
+  return '';
+}
+
+function openAwardShowcase(id){
+  var a=(db.awards||[]).find(function(x){return x.id===id;});
+  if(!a) return;
+  var col=AWARD_TYPE_COLORS_PUB[a.type]||'#c9a84c';
+  var label=AWARD_TYPE_LABELS_PUB[a.type]||a.type;
+  var blurb=getAwardBlurb(a);
+  var body='<div style="text-align:center;padding:.5rem 0 1rem">'+
+    (a.img?'<img src="'+a.img+'" style="width:180px;height:180px;object-fit:contain;margin-bottom:1.1rem;filter:drop-shadow(0 10px 28px rgba(0,0,0,.55))">':'<div style="font-size:5rem;margin-bottom:.6rem">'+label.split(' ')[0]+'</div>')+
+    '<div style="font-family:Anton,sans-serif;font-size:.68rem;letter-spacing:3px;color:'+col+';text-transform:uppercase;margin-bottom:.5rem">'+label+'</div>'+
+    '<div style="font-family:Anton,sans-serif;font-size:1.5rem;color:var(--gold);letter-spacing:1px;margin-bottom:.3rem">'+a.recipient+'</div>'+
+    '<div style="font-size:.85rem;color:var(--text);margin-bottom:.6rem">'+a.name+'</div>'+
+    (blurb?'<div style="font-size:.78rem;color:var(--muted);background:rgba(255,255,255,.03);border:1px solid rgba(201,168,76,.15);border-radius:10px;padding:.65rem .9rem;margin:.4rem auto .3rem;max-width:320px">'+blurb+'</div>':'')+
+    (a.season?'<div style="font-size:.7rem;color:rgba(201,168,76,.6);margin-top:.5rem">'+a.season+(a.year?' · '+a.year:'')+'</div>':'')+
+  '</div>';
+  document.getElementById('awardShowcaseBody').innerHTML=body;
+  document.getElementById('awardShowcasePanel').style.display='block';
+}
+function closeAwardShowcase(){
+  document.getElementById('awardShowcasePanel').style.display='none';
 }
 
 function renderPastSeasons(){
@@ -4024,6 +4089,17 @@ function sendPubAiMessage(){
       <button onclick="closeMatchPreview()" style="background:none;border:none;color:#5a6a9a;font-size:1.3rem;cursor:pointer;padding:.3rem">✕</button>
     </div>
     <div id="matchPreviewBody"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ AWARD SHOWCASE MODAL ══════════════════════════ -->
+<div id="awardShowcasePanel" style="display:none;position:fixed;inset:0;z-index:8000;background:rgba(4,6,15,.97);overflow-y:auto;-webkit-overflow-scrolling:touch" onclick="if(event.target===this)closeAwardShowcase()">
+  <div style="max-width:480px;margin:0 auto;padding:1rem .8rem 4rem">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:.8rem 0 1rem;border-bottom:1px solid #1e2a4a;margin-bottom:1.2rem">
+      <div style="font-family:Anton,sans-serif;font-size:.9rem;letter-spacing:2px;color:#c9a84c">AWARD</div>
+      <button onclick="closeAwardShowcase()" style="background:none;border:none;color:#5a6a9a;font-size:1.3rem;cursor:pointer;padding:.3rem">✕</button>
+    </div>
+    <div id="awardShowcaseBody"></div>
   </div>
 </div>
 
